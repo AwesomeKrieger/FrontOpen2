@@ -93,6 +93,7 @@ async function encodeSample(frames = 23, keyframeInterval = 10) {
           100 * t,
           1000 + t,
           100 * t,
+          5 * t,
         ]),
       }),
     );

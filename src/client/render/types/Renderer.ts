@@ -75,6 +75,10 @@ export interface PlayerState {
   /** Cumulative gold received from all sources (live). */
   goldEarned: number;
   troops: number;
+  /** Accumulated research points (spent on techs). */
+  researchPoints: number;
+  /** Researched techs as a bitmask indexed by TECH_ORDER. */
+  researchedTechs: number;
   isTraitor: boolean;
   traitorRemainingTicks: number;
   inDoomsdayClock: boolean;

@@ -7,6 +7,7 @@ import {
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
 import { PlayerLike } from "@openfront/engine-api/game/ReadViews";
+import { TechId } from "@openfront/engine-api/game/TechTree";
 import { GameConfig } from "@openfront/engine-api/Schemas";
 import { pow } from "../DetMath";
 import { DoomsdayClockSpeed } from "../game/DoomsdayClock";
@@ -247,6 +248,12 @@ export class Config {
           upgradable: true,
         };
         break;
+      case UnitType.Tank:
+        info = { maxHealth: 800 };
+        break;
+      case UnitType.Plane:
+        info = { maxHealth: 300 };
+        break;
       case UnitType.TransportShip:
       case UnitType.SAMMissile:
       case UnitType.AtomBomb:
@@ -263,6 +270,68 @@ export class Config {
 
     this.unitInfoCache.set(type, info);
     return info;
+  }
+
+  /**
+   * Research points a player accrues per tick. Cities and factories are the
+   * engine of research; the Logistics tech speeds it up by half again.
+   */
+  researchPointsPerTick(player: PlayerLike): number {
+    let points = 1;
+    for (const u of player.units(UnitType.City)) {
+      if (!u.isUnderConstruction()) {
+        points += 2 * u.level();
+      }
+    }
+    for (const u of player.units(UnitType.Factory)) {
+      if (!u.isUnderConstruction()) {
+        points += 2 * u.level();
+      }
+    }
+    if (player.hasTech(TechId.Logistics)) {
+      points = Math.floor((points * 3) / 2);
+    }
+    return points;
+  }
+
+  /** Health multiplier for tanks from the ReinforcedArmor tech. */
+  tankHealthMultiplier(player: PlayerLike): number {
+    return player.hasTech(TechId.ReinforcedArmor) ? 1.3 : 1;
+  }
+
+  /** Damage multiplier for planes from the PrecisionBombing tech. */
+  planeDamageMultiplier(player: PlayerLike): number {
+    return player.hasTech(TechId.PrecisionBombing) ? 1.3 : 1;
+  }
+
+  /** How far a tank steps per tick (in tiles, applied to its movement). */
+  tankSpeed(): number {
+    return 2;
+  }
+
+  /** Tiles per tick a plane travels. */
+  planeSpeed(): number {
+    return 6;
+  }
+
+  /** Radius (in tiles) a tank hits every tick it is in combat. */
+  tankAttackRange(): number {
+    return 4;
+  }
+
+  /** Troops a tank destroys per tick against a hostile player's territory. */
+  tankDamage(): number {
+    return 150;
+  }
+
+  /** Radius (in tiles) of a plane's bombing run. */
+  planeBombRadius(): number {
+    return 5;
+  }
+
+  /** Troops a plane's bombing run destroys. */
+  planeDamage(): number {
+    return 800;
   }
 
   private hasInfiniteTroopsFor(player: PlayerLike): boolean {
@@ -411,6 +480,11 @@ export class Config {
         default:
           assertNever(this._gameConfig.difficulty);
       }
+    }
+
+    if (player.hasTech(TechId.Mobilization)) {
+      // Mobilization: +15% troop growth.
+      toAdd *= 1.15;
     }
 
     return Math.min(player.troops() + toAdd, max) - player.troops();

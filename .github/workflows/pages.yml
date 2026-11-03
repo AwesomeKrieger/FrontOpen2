@@ -1,0 +1,66 @@
+name: Deploy to GitHub Pages
+
+# Builds the client as a static site and publishes it to GitHub Pages.
+#
+# Pages serves the page from the repository's own path (`/<repo>/`), so the
+# build names that path: index.html and the worker bundle resolve their
+# assets from it, and singleplayer runs entirely in the browser. There is no
+# game server on Pages, so multiplayer is unavailable there (see
+# scripts/build-pages.ts).
+#
+# Repository settings -> Pages -> Source must be "GitHub Actions" for this
+# workflow to publish.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # Same npm as the rest of CI: the lockfile is written for it.
+      - run: npm install --global --ignore-scripts npm@12.1.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Build the client bundle
+        run: npx vite build
+
+      - name: Assemble the static site
+        run: npx tsx scripts/build-pages.ts --out pages-site --base "${{ github.event.repository.name }}"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages-site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

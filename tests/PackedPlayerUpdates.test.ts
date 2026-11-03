@@ -1,6 +1,6 @@
 /**
  * The worker→main tick payload: per-tick numeric stat churn travels on the
- * transferable `packedPlayerUpdates` quad buffer (drained from GameImpl),
+ * transferable `packedPlayerUpdates` buffer (drained from GameImpl),
  * and `playerNameViewData` is attached only on ticks where the worker
  * recomputed name placements. See GameUpdateViewData in GameUpdates.ts.
  */
@@ -41,16 +41,16 @@ describe("packedPlayerUpdates (GameImpl drain)", () => {
     game.drainPackedPlayerUpdates(); // discard spawn-time churn
   });
 
-  test("a stat change is drained as a [smallID, tiles, gold, troops, goldEarned] quint", () => {
+  test("a stat change is drained as a [smallID, tiles, gold, troops, goldEarned, researchPoints] sextuple", () => {
     alice.addGold(500n);
     game.executeNextTick();
     const packed = game.drainPackedPlayerUpdates();
     expect(packed).not.toBeNull();
-    // Find alice's quint (other players may have churned too).
+    // Find alice's sextuple (other players may have churned too).
     let quad: number[] | undefined;
-    for (let i = 0; i + 4 < packed!.length; i += 5) {
+    for (let i = 0; i + 5 < packed!.length; i += 6) {
       if (packed![i] === alice.smallID()) {
-        quad = Array.from(packed!.subarray(i, i + 5));
+        quad = Array.from(packed!.subarray(i, i + 6));
       }
     }
     expect(quad).toEqual([
@@ -59,7 +59,25 @@ describe("packedPlayerUpdates (GameImpl drain)", () => {
       Number(alice.gold()),
       alice.troops(),
       Number(alice.goldEarned()),
+      alice.researchPoints(),
     ]);
+  });
+
+  test("accrued research points alone still flush a sextuple", () => {
+    const before = alice.researchPoints();
+    alice.addResearchPoints(7);
+    game.executeNextTick();
+    const packed = game.drainPackedPlayerUpdates();
+    expect(packed).not.toBeNull();
+    let quad: number[] | undefined;
+    for (let i = 0; i + 5 < packed!.length; i += 6) {
+      if (packed![i] === alice.smallID()) {
+        quad = Array.from(packed!.subarray(i, i + 6));
+      }
+    }
+    // The balance moved even though the other packed stats may not have.
+    expect(quad?.[5]).toBe(alice.researchPoints());
+    expect(alice.researchPoints()).toBeGreaterThan(before);
   });
 
   test("drain returns null when no stats changed and resets between drains", () => {
@@ -127,7 +145,7 @@ describe("GameRunner payload cadence", () => {
     expect(byTick.get(60)!.playerNameViewData).toBeDefined();
   });
 
-  test("stat churn arrives as packedPlayerUpdates quints on the view data", () => {
+  test("stat churn arrives as packedPlayerUpdates sextuples on the view data", () => {
     tick(); // 1
     tick(); // 2
     game.endSpawnPhase();
@@ -139,11 +157,11 @@ describe("GameRunner payload cadence", () => {
     const gu = byTick.get(game.ticks())!;
     const packed = gu.packedPlayerUpdates;
     expect(packed).toBeDefined();
-    expect(packed!.length % 5).toBe(0);
+    expect(packed!.length % 6).toBe(0);
     let quad: number[] | undefined;
-    for (let i = 0; i + 4 < packed!.length; i += 5) {
+    for (let i = 0; i + 5 < packed!.length; i += 6) {
       if (packed![i] === alice.smallID()) {
-        quad = Array.from(packed!.subarray(i, i + 5));
+        quad = Array.from(packed!.subarray(i, i + 6));
       }
     }
     expect(quad).toEqual([
@@ -152,6 +170,7 @@ describe("GameRunner payload cadence", () => {
       Number(alice.gold()),
       alice.troops(),
       Number(alice.goldEarned()),
+      alice.researchPoints(),
     ]);
     // And the object channel no longer carries the stat fields: alice must
     // not appear in this tick's PlayerUpdates for a gold-only change.

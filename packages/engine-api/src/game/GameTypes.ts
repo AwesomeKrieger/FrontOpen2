@@ -214,6 +214,8 @@ export enum UnitType {
   MIRVWarhead = "MIRV Warhead",
   Train = "Train",
   Factory = "Factory",
+  Tank = "Tank",
+  Plane = "Plane",
 }
 
 export enum TrainType {
@@ -236,6 +238,18 @@ export const BuildableAttacks = unitTypeGroup([
   UnitType.Warship,
 ] as const);
 
+/** Ground units: move over land, take damage, fight other units. */
+export const LandUnits = unitTypeGroup([UnitType.Tank] as const);
+
+/** Air units: fly over any terrain and strike a target tile. */
+export const AirUnits = unitTypeGroup([UnitType.Plane] as const);
+
+/** Units that are built from the build menu but are not structures. */
+export const MobileUnits = unitTypeGroup([
+  ...LandUnits.types,
+  ...AirUnits.types,
+] as const);
+
 export const Structures = unitTypeGroup([
   UnitType.City,
   UnitType.DefensePost,
@@ -248,6 +262,7 @@ export const Structures = unitTypeGroup([
 export const BuildMenus = unitTypeGroup([
   ...Structures.types,
   ...BuildableAttacks.types,
+  ...MobileUnits.types,
 ] as const);
 
 export const PlayerBuildable = unitTypeGroup([

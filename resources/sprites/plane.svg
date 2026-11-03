@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- wings -->
+  <polygon points="32,20 4,40 4,46 32,38 60,46 60,40" fill="#828282"/>
+  <!-- tail -->
+  <polygon points="32,46 22,58 22,62 32,54 42,62 42,58" fill="#828282"/>
+  <!-- fuselage -->
+  <ellipse cx="32" cy="32" rx="6" ry="22" fill="#b4b4b4"/>
+  <!-- cockpit -->
+  <ellipse cx="32" cy="20" rx="3.5" ry="7" fill="#464646"/>
+</svg>

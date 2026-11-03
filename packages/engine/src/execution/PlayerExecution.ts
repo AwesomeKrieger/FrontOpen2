@@ -5,6 +5,7 @@ import {
   Structures,
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
+import { TechId } from "@openfront/engine-api/game/TechTree";
 import { zInt, zPlayerRef } from "@openfront/engine-lib/snapshot/SnapshotType";
 import { getMode, simpleHash } from "@openfront/engine-lib/Util";
 import { z } from "zod";
@@ -98,8 +99,17 @@ export class PlayerExecution implements Execution {
 
     const troopInc = this.config.troopIncreaseRate(this.player);
     this.player.addTroops(troopInc);
-    const goldFromWorkers = this.config.goldAdditionRate(this.player);
+    let goldFromWorkers = this.config.goldAdditionRate(this.player);
+    if (this.player.hasTech(TechId.Industry)) {
+      // Industry: +15% worker income, in whole gold pieces (deterministic).
+      goldFromWorkers = (goldFromWorkers * 115n) / 100n;
+    }
     this.player.addGold(goldFromWorkers);
+
+    // Research points from cities and factories (see Config).
+    this.player.addResearchPoints(
+      this.config.researchPointsPerTick(this.player),
+    );
 
     // Record stats
     this.mg.stats().goldWork(this.player, goldFromWorkers);

@@ -168,6 +168,8 @@ export function playerStateFromUpdate(pu: PlayerUpdate): PlayerState {
     piracyGold: Number(pu.piracyGold ?? 0n),
     goldEarned: Number(pu.goldEarned ?? 0n),
     troops: pu.troops!,
+    researchPoints: pu.researchPoints ?? 0,
+    researchedTechs: pu.researchedTechs ?? 0,
     isTraitor: pu.isTraitor!,
     traitorRemainingTicks: Math.max(0, pu.traitorRemainingTicks ?? 0),
     inDoomsdayClock: pu.inDoomsdayClock ?? false,
@@ -206,8 +208,8 @@ export function embargoSmallIDs(
 
 /**
  * Apply GameUpdateViewData.packedPlayerUpdates: [smallID, tilesOwned, gold,
- * troops, goldEarned] for every player whose stats changed this tick.
- * `applied` is called with each player that got new stats.
+ * troops, goldEarned, researchPoints] for every player whose stats changed
+ * this tick. `applied` is called with each player that got new stats.
  */
 export function applyPackedPlayerStats(
   packed: Float64Array | undefined,
@@ -215,13 +217,14 @@ export function applyPackedPlayerStats(
   applied?: (smallID: number) => void,
 ): void {
   if (packed === undefined) return;
-  for (let i = 0; i + 4 < packed.length; i += 5) {
+  for (let i = 0; i + 5 < packed.length; i += 6) {
     const state = stateOf(packed[i]);
     if (state === undefined) continue;
     state.tilesOwned = packed[i + 1];
     state.gold = packed[i + 2];
     state.troops = packed[i + 3];
     state.goldEarned = packed[i + 4];
+    state.researchPoints = packed[i + 5];
     applied?.(packed[i]);
   }
 }

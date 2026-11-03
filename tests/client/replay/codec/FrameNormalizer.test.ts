@@ -63,7 +63,7 @@ describe("FrameNormalizer", () => {
     const before = n.push(frame(2)).players.get(1)!;
     const f = n.push(
       frame(3, {
-        packedPlayerUpdates: Float64Array.from([1, 55, 1234.5, 999, 5000]),
+        packedPlayerUpdates: Float64Array.from([1, 55, 1234.5, 999, 5000, 0]),
       }),
     );
     expect(f.players.get(1)).toMatchObject({

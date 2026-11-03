@@ -46,6 +46,7 @@ describe("TradeShipExecution", () => {
       id: vi.fn(() => 1),
       clientID: vi.fn(() => 1),
       canTrade: vi.fn(() => true),
+      hasTech: vi.fn(() => false),
     } as any;
 
     dstOwner = {
@@ -58,6 +59,7 @@ describe("TradeShipExecution", () => {
       unitCount: vi.fn(() => 1),
       clientID: vi.fn(() => 2),
       canTrade: vi.fn(() => true),
+      hasTech: vi.fn(() => false),
     } as any;
 
     pirate = {
@@ -70,6 +72,7 @@ describe("TradeShipExecution", () => {
       units: vi.fn(() => [piratePort, piratePort2]),
       unitCount: vi.fn(() => 2),
       canTrade: vi.fn(() => true),
+      hasTech: vi.fn(() => false),
     } as any;
 
     piratePort = {

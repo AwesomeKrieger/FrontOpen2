@@ -18,6 +18,7 @@ const HUD_TAGS = [
   "game-starting-modal",
   "emoji-table",
   "build-menu",
+  "research-tree",
   "game-left-sidebar",
   "control-panel",
   "events-display",

@@ -44,6 +44,7 @@ export class NoServerError extends Error {
 
 export class ClientEnv {
   private static values: ClientEnvValues | null = null;
+  private static basePathValue: string | null = null;
   private static publicKey: JWK | null = null;
   // The API-served server list (src/client/ServerList.ts), once fetched, and
   // the letter picked for new games from it. Null until a server was needed
@@ -119,6 +120,20 @@ export class ClientEnv {
     return v.numWorkers !== undefined;
   }
 
+  /**
+   * Whether this page names a game server at all, without touching the
+   * document's origin: false only on a static page (a GitHub Pages build),
+   * where singleplayer still runs in the browser but nothing can be reported
+   * to and no lobby can be opened.
+   */
+  static hasServer(): boolean {
+    return ClientEnv.ownServerKnown();
+  }
+
+  static env(): GameEnv {
+    return ClientEnv.get().gameEnv;
+  }
+
   private static requireOwnServer(what: string): void {
     if (ClientEnv.ownServerKnown()) return;
     throw new NoServerError(`no ${what} base: no server list, none injected`);
@@ -189,9 +204,40 @@ export class ClientEnv {
   // read from different sources (window.BOOTSTRAP_CONFIG vs process.env) but
   // the derived logic is identical. Consolidate into a shared helper that
   // takes a source so we don't have to keep them in sync by hand.
-  static env(): GameEnv {
-    return ClientEnv.get().gameEnv;
+  /**
+   * The deployment path this bundle is served from ("", "/FrontOpen", …):
+   * where navigation, history entries and the asset manifest's own prefix all
+   * start. Answers "" on every server-rendered page, at an origin root.
+   */
+  static basePath(): string {
+    ClientEnv.basePathValue ??=
+      typeof window === "undefined"
+        ? ""
+        : deriveBasePath(window.location.pathname);
+    return ClientEnv.basePathValue;
   }
+
+  /**
+   * Whether the page is served from a path that is not an origin root. Static
+   * hosting under such a path has no SPA fallback, so the client has to stay
+   * in its document (no navigation to a deep route that would 404) — see
+   * navigateToPath.
+   */
+  static servedFromSubPath(): boolean {
+    return ClientEnv.basePath() !== "";
+  }
+
+  /** A page route ("/" → "/FrontOpen/") under the deployment path. */
+  static pageHref(route: string): string {
+    const path = route.startsWith("/") ? route : `/${route}`;
+    return `${ClientEnv.basePath()}${path}`;
+  }
+
+  // Test-only.
+  static resetBasePath(): void {
+    ClientEnv.basePathValue = null;
+  }
+
   static stripePublishableKey(): string | undefined {
     return ClientEnv.get().stripePublishableKey;
   }
@@ -359,6 +405,11 @@ export class ClientEnv {
    */
   static gamePath(gameID: GameID): string {
     const id = encodeURIComponent(gameID);
+    // Under a static deployment path (GitHub Pages) every game runs in the
+    // browser, and a "/<repo>/w<n>/game/..." route has no server behind it.
+    if (ClientEnv.servedFromSubPath()) {
+      return ClientEnv.pageHref(`/game/${id}`);
+    }
     try {
       return `/${ClientEnv.gameWorkerPath(gameID)}/game/${id}`;
     } catch (e) {
@@ -586,6 +637,30 @@ export function deriveServerHttpBase(
     locationHost,
   );
   return `${secure ? "https:" : "http:"}//${host}`;
+}
+
+/**
+ * The deployment path this page is served from, without its trailing slash:
+ * "" at an origin root, "/FrontOpen" on a GitHub Pages project site. Every
+ * page-level route the client navigates to (the game, a player profile, the
+ * home page) is relative to it.
+ *
+ * Static hosting has no SPA fallback — GitHub Pages answers a deep path under
+ * the project site with its 404 page — so behind that path the client must
+ * stay in the existing document and switch views itself instead of
+ * navigating (see navigateToPath).
+ */
+export function deriveBasePath(locationPathname: string): string {
+  // "/FrontOpen" (a directory URL without its slash), "/FrontOpen/" and
+  // "/FrontOpen/index.html" (opened explicitly) all name the deployment path;
+  // "/game/<id>" and "/w0/game/<id>" are routes every host shares and keep
+  // the origin-relative answers.
+  const trimmed = locationPathname
+    .replace(/\/+$/, "")
+    .replace(/\/index\.html$/, "");
+  if (trimmed === "") return "";
+  if (trimmed.endsWith("/game") || trimmed.includes("/game/")) return "";
+  return trimmed;
 }
 
 /** Whether an origin on this scheme is a real web address someone else can open. */

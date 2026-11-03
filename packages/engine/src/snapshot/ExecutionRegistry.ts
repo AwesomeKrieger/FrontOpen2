@@ -24,22 +24,26 @@ import { NationExecutionSnapshot } from "../execution/NationExecution";
 import { NoOpExecutionSnapshot } from "../execution/NoOpExecution";
 import { NukeExecutionSnapshot } from "../execution/NukeExecution";
 import { PauseExecutionSnapshot } from "../execution/PauseExecution";
+import { PlaneExecutionSnapshot } from "../execution/PlaneExecution";
 import { PlayerExecutionSnapshot } from "../execution/PlayerExecution";
 import { PortExecutionSnapshot } from "../execution/PortExecution";
 import { QuickChatExecutionSnapshot } from "../execution/QuickChatExecution";
 import { RecomputeRailClusterExecutionSnapshot } from "../execution/RecomputeRailClusterExecution";
+import { ResearchExecutionSnapshot } from "../execution/ResearchExecution";
 import { RetreatExecutionSnapshot } from "../execution/RetreatExecution";
 import { SAMLauncherExecutionSnapshot } from "../execution/SAMLauncherExecution";
 import { SAMMissileExecutionSnapshot } from "../execution/SAMMissileExecution";
 import { ShellExecutionSnapshot } from "../execution/ShellExecution";
 import { SpawnExecutionSnapshot } from "../execution/SpawnExecution";
 import { SpawnTimerExecutionSnapshot } from "../execution/SpawnTimerExecution";
+import { TankExecutionSnapshot } from "../execution/TankExecution";
 import { TargetPlayerExecutionSnapshot } from "../execution/TargetPlayerExecution";
 import { TradeShipExecutionSnapshot } from "../execution/TradeShipExecution";
 import { TrainExecutionSnapshot } from "../execution/TrainExecution";
 import { TrainStationExecutionSnapshot } from "../execution/TrainStationExecution";
 import { TransportShipExecutionSnapshot } from "../execution/TransportShipExecution";
 import { TribeExecutionSnapshot } from "../execution/TribeExecution";
+import { TribeResearchExecutionSnapshot } from "../execution/TribeResearchExecution";
 import { UpgradeStructureExecutionSnapshot } from "../execution/UpgradeStructureExecution";
 import { WarshipExecutionSnapshot } from "../execution/WarshipExecution";
 import { WinCheckExecutionSnapshot } from "../execution/WinCheckExecution";
@@ -78,10 +82,12 @@ export const EXECUTION_SNAPSHOT_TYPES = [
   NoOpExecutionSnapshot,
   NukeExecutionSnapshot,
   PauseExecutionSnapshot,
+  PlaneExecutionSnapshot,
   PlayerExecutionSnapshot,
   PortExecutionSnapshot,
   QuickChatExecutionSnapshot,
   RecomputeRailClusterExecutionSnapshot,
+  ResearchExecutionSnapshot,
   RetreatExecutionSnapshot,
   SAMLauncherExecutionSnapshot,
   SAMMissileExecutionSnapshot,
@@ -89,11 +95,13 @@ export const EXECUTION_SNAPSHOT_TYPES = [
   SpawnExecutionSnapshot,
   SpawnTimerExecutionSnapshot,
   TargetPlayerExecutionSnapshot,
+  TankExecutionSnapshot,
   TradeShipExecutionSnapshot,
   TrainExecutionSnapshot,
   TrainStationExecutionSnapshot,
   TransportShipExecutionSnapshot,
   TribeExecutionSnapshot,
+  TribeResearchExecutionSnapshot,
   UpgradeStructureExecutionSnapshot,
   WarshipExecutionSnapshot,
   WinCheckExecutionSnapshot,

@@ -2193,7 +2193,9 @@ class Client {
     this.currentUrl = null;
 
     try {
-      history.replaceState(null, "", "/");
+      // The page route under the deployment path ("" on a normal server, so
+      // this stays "/" there) — GitHub Pages has no SPA fallback behind it.
+      history.replaceState(null, "", ClientEnv.pageHref("/"));
     } catch (e) {
       console.warn("Failed to restore URL on leave:", e);
     }

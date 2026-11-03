@@ -22,6 +22,7 @@ function makeDisplay(
   const player = {
     gold: () => 1000n,
     isAlive: () => true,
+    hasTech: () => true,
     units: (unitType: UnitType) =>
       hasMissileSilo && unitType === UnitType.MissileSilo ? [{}] : [],
   };
@@ -106,8 +107,10 @@ describe("mobile UnitDisplay layout", () => {
       expect(grid?.classList.contains("max-[360px]:auto-cols-[44px]")).toBe(
         true,
       );
-      expect(grid?.children).toHaveLength(10);
-      expect(grid?.style.getPropertyValue("--unit-display-columns")).toBe("10");
+      expect(grid?.children).toHaveLength(BuildMenus.types.length);
+      expect(grid?.style.getPropertyValue("--unit-display-columns")).toBe(
+        String(BuildMenus.types.length),
+      );
     } finally {
       display.remove();
     }

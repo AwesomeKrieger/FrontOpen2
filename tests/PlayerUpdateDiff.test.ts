@@ -151,6 +151,7 @@ describe("Player update diffing (toUpdate)", () => {
       Number(alice.gold()),
       alice.troops(),
       Number(alice.goldEarned()),
+      alice.researchPoints(),
     ]);
 
     // Nothing changed → no quad, no diff.
@@ -164,7 +165,7 @@ describe("Player update diffing (toUpdate)", () => {
     expect(statsOut).toEqual([]);
   });
 
-  test("income that nets to zero gold still flushes the stats quint", () => {
+  test("income that nets to zero gold still flushes the stats sextuple", () => {
     const statsOut: number[] = [];
     alice.toUpdate(statsOut);
     statsOut.length = 0;
@@ -186,6 +187,30 @@ describe("Player update diffing (toUpdate)", () => {
       Number(alice.gold()),
       alice.troops(),
       earnedBefore + 500,
+      alice.researchPoints(),
+    ]);
+  });
+
+  test("research points that grow alone still flush the stats sextuple", () => {
+    const statsOut: number[] = [];
+    alice.toUpdate(statsOut);
+    statsOut.length = 0;
+
+    // Points accrue on their own: gold, troops and tiles can all sit still
+    // while the balance grows (no income, or a player who is saving).
+    const pointsBefore = alice.researchPoints();
+    alice.addResearchPoints(12);
+    expect(alice.researchPoints()).toBe(pointsBefore + 12);
+
+    const diff = alice.toUpdate(statsOut);
+    expect(diff).toBeNull();
+    expect(statsOut).toEqual([
+      alice.smallID(),
+      alice.numTilesOwned(),
+      Number(alice.gold()),
+      alice.troops(),
+      Number(alice.goldEarned()),
+      pointsBefore + 12,
     ]);
   });
 

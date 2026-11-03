@@ -44,6 +44,7 @@ import { PerformanceOverlay } from "./layers/PerformanceOverlay";
 import { PlayerInfoOverlay } from "./layers/PlayerInfoOverlay";
 import { PlayerPanel } from "./layers/PlayerPanel";
 import { ReplayPanel } from "./layers/ReplayPanel";
+import { ResearchTree } from "./layers/ResearchTree";
 import { SettingsModal } from "./layers/SettingsModal";
 import { SpawnTimer } from "./layers/SpawnTimer";
 import { TutorialPanel } from "./layers/TutorialPanel";
@@ -92,6 +93,13 @@ export function createRenderer(
   buildMenu.eventBus = eventBus;
   buildMenu.uiState = uiState;
   buildMenu.transformHandler = transformHandler;
+
+  const researchTree = document.querySelector("research-tree") as ResearchTree;
+  if (!researchTree || !(researchTree instanceof ResearchTree)) {
+    console.error("ResearchTree element not found in the DOM");
+  }
+  researchTree.game = game;
+  researchTree.eventBus = eventBus;
 
   const gameLeftSidebar = document.querySelector(
     "game-left-sidebar",
@@ -355,6 +363,7 @@ export function createRenderer(
     attacksDisplay,
     chatDisplay,
     buildMenu,
+    researchTree,
     new MainRadialMenu(
       eventBus,
       game,

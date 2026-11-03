@@ -19,3 +19,5 @@ export const teamIcon = assetUrl("images/TeamIconSolidWhite.svg");
 export const upperLimitIcon = assetUrl("images/UpperLimitIcon.svg");
 export const allianceIcon = assetUrl("images/AllianceIcon.svg");
 export const traitorIcon = assetUrl("images/TraitorIcon.svg");
+export const tankIcon = assetUrl("images/TankIconWhite.svg");
+export const planeIcon = assetUrl("images/PlaneIconWhite.svg");

@@ -7,6 +7,7 @@ import {
   Tick,
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
+import { TechId } from "@openfront/engine-api/game/TechTree";
 import {
   AllPlayersStats,
   ClientID,
@@ -147,6 +148,10 @@ export class BuildUnitIntentEvent implements GameEvent {
 
 export class SendTargetPlayerIntentEvent implements GameEvent {
   constructor(public readonly targetID: PlayerID) {}
+}
+
+export class ResearchTechIntentEvent implements GameEvent {
+  constructor(public readonly tech: TechId) {}
 }
 
 export class SendEmojiIntentEvent implements GameEvent {
@@ -343,7 +348,9 @@ export class Transport {
       this.onSendEmbargoAllIntent(e),
     );
     this.subscribe(BuildUnitIntentEvent, (e) => this.onBuildUnitIntent(e));
-
+    this.subscribe(ResearchTechIntentEvent, (e) =>
+      this.onResearchTechIntent(e),
+    );
     this.subscribe(PauseGameIntentEvent, (e) => this.onPauseGameIntent(e));
     this.subscribe(SendWinnerEvent, (e) => this.onSendWinnerEvent(e));
     this.subscribe(SendLiveStatsEvent, (e) => this.onSendLiveStatsEvent(e));
@@ -905,6 +912,13 @@ export class Transport {
       tile: event.tile,
       rocketDirectionUp: event.rocketDirectionUp,
       amount: event.amount,
+    });
+  }
+
+  private onResearchTechIntent(event: ResearchTechIntentEvent) {
+    this.sendIntent({
+      type: "research_tech",
+      tech: event.tech,
     });
   }
 

@@ -199,8 +199,10 @@
       "hydrogen_bomb": "Large explosion",
       "mirv": "Huge explosion, only targets selected player",
       "missile_silo": "Used to launch nukes",
+      "plane": "Flies to a target and bombs enemy troops and units",
       "port": "Sends trade ships to generate gold",
       "sam_launcher": "Defends against incoming nukes",
+      "tank": "Rolls over land, destroys enemy troops nearby",
       "warship": "Captures trade ships, destroys ships and boats"
     },
     "not_enough_money": "Not enough money",
@@ -2237,6 +2239,53 @@
     "body": "A person who you recently reported has been banned, thanks for keeping openfront a safer and more enjoyable place",
     "heading": "Thank you"
   },
+  "research": {
+    "button": "Research",
+    "hint": "Cities and factories generate research points. Click a technology to unlock it.",
+    "income": "+{points}/s",
+    "points": "Research Points",
+    "points_short": "RP",
+    "requires": "Requires",
+    "researched": "Researched",
+    "researched_count": "{researched}/{total} researched",
+    "tech": {
+      "Armor": {
+        "desc": "Unlocks Tanks",
+        "name": "Armor"
+      },
+      "Aviation": {
+        "desc": "Unlocks Planes",
+        "name": "Aviation"
+      },
+      "Industry": {
+        "desc": "+15% gold income",
+        "name": "Industry"
+      },
+      "Logistics": {
+        "desc": "+50% research points",
+        "name": "Logistics"
+      },
+      "Mobilization": {
+        "desc": "+15% troop growth",
+        "name": "Mobilization"
+      },
+      "PrecisionBombing": {
+        "desc": "Planes +30% damage",
+        "name": "Precision Bombing"
+      },
+      "ReinforcedArmor": {
+        "desc": "Tanks +30% health",
+        "name": "Reinforced Armor"
+      },
+      "Trade": {
+        "desc": "+25% trade ship gold",
+        "name": "Trade"
+      }
+    },
+    "tier": "Tier",
+    "title": "Research",
+    "unaffordable": "Not enough research points or gold yet"
+  },
   "reward_track": {
     "after_level": "After level {level}",
     "caps_amount": "{amount} Caps",
@@ -2667,8 +2716,10 @@
     "hydrogen_bomb": "Hydrogen Bomb",
     "mirv": "MIRV",
     "missile_silo": "Missile Silo",
+    "plane": "Plane",
     "port": "Port",
     "sam_launcher": "SAM Launcher",
+    "tank": "Tank",
     "warship": "Warship"
   },
   "update_available": {

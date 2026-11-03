@@ -39,6 +39,7 @@ import {
   UnitLike,
   UnitPredicate,
 } from "@openfront/engine-api/game/ReadViews";
+import { TechId } from "@openfront/engine-api/game/TechTree";
 import { AllPlayersStats, ClientID } from "@openfront/engine-api/Schemas";
 import { MotionPlanRecord } from "@openfront/engine-lib/game/MotionPlans";
 import type { EngineConfig } from "../configuration/EngineConfig";
@@ -110,6 +111,14 @@ export interface UnitParamsMap {
   [UnitType.SAMLauncher]: Record<string, never>;
 
   [UnitType.City]: Record<string, never>;
+
+  [UnitType.Tank]: {
+    targetTile?: TileRef;
+  };
+
+  [UnitType.Plane]: {
+    targetTile?: TileRef;
+  };
 }
 
 // Type helper to get params type for a specific unit type
@@ -381,6 +390,16 @@ export interface Player extends PlayerLike {
   setTroops(troops: number): void;
   addTroops(troops: number): void;
   removeTroops(troops: number): number;
+
+  // Research (tech tree). Research points accrue from cities and factories;
+  // techs are unlocked with points plus gold.
+  researchPoints(): number;
+  addResearchPoints(points: number): void;
+  hasTech(tech: TechId): boolean;
+  researchedTechMask(): number;
+  canResearch(tech: TechId): boolean;
+  /** Spends the tech's cost and unlocks it. False when not affordable. */
+  researchTech(tech: TechId): boolean;
 
   // Units
   // Fixed-arity + array overloads instead of a rest parameter: the rest array

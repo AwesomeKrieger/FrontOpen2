@@ -26,6 +26,7 @@ import { NationExecution } from "./NationExecution";
 import { NoOpExecution } from "./NoOpExecution";
 import { PauseExecution } from "./PauseExecution";
 import { QuickChatExecution } from "./QuickChatExecution";
+import { ResearchExecution } from "./ResearchExecution";
 import { RetreatExecution } from "./RetreatExecution";
 import { SpawnExecution } from "./SpawnExecution";
 import { TargetPlayerExecution } from "./TargetPlayerExecution";
@@ -121,6 +122,8 @@ export class Executor {
           intent.rocketDirectionUp,
           intent.amount,
         );
+      case "research_tech":
+        return new ResearchExecution(player, intent.tech);
       case "allianceExtension": {
         return new AllianceExtensionExecution(player, intent.recipient);
       }

@@ -32,6 +32,12 @@ import {
   PlayerUpdate,
 } from "@openfront/engine-api/game/GameUpdates";
 import { ReadonlyTileSet } from "@openfront/engine-api/game/ReadViews";
+import {
+  TechId,
+  techBit,
+  techById,
+  techForUnit,
+} from "@openfront/engine-api/game/TechTree";
 import { ClientID } from "@openfront/engine-api/Schemas";
 import { andFN, manhattanDistFN } from "@openfront/engine-lib/game/GameMapImpl";
 import { TileSet } from "@openfront/engine-lib/game/TileSet";
@@ -141,6 +147,11 @@ export class PlayerImpl implements Player {
   private _gold: bigint;
   private _troops: bigint;
 
+  /** Accumulated research points, spent on techs. */
+  private _researchPoints = 0;
+  /** Researched techs as a bitmask indexed by TECH_ORDER. */
+  private _researchedTechMask = 0;
+
   /** Cumulative ship-trade revenue (arrival credit for src + dst port owners). */
   private _tradeGold: bigint = 0n;
   /** Cumulative train revenue: own trains + others' trains stopping at own stations. */
@@ -228,10 +239,11 @@ export class PlayerImpl implements Player {
    * return only fields that changed since the previous call (a partial
    * `{ type, id, ...changedFields }`), or `null` if nothing changed.
    *
-   * tilesOwned / gold / troops / goldEarned are excluded from partial
-   * updates (they churn for nearly every alive player every tick): when any
-   * of them changed, a `[smallID, tilesOwned, gold, troops, goldEarned]`
-   * quint is pushed to `statsOut` instead, which GameImpl drains into the
+   * tilesOwned / gold / troops / goldEarned / researchPoints are excluded
+   * from partial updates (they churn for nearly every alive player every
+   * tick): when any of them changed, a
+   * `[smallID, tilesOwned, gold, troops, goldEarned, researchPoints]`
+   * sextuple is pushed to `statsOut` instead, which GameImpl drains into the
    * transferable `packedPlayerUpdates` buffer. Attack troop counts likewise
    * go to `attackTroopsOut` as `[smallID, direction, index, troops]` quads
    * (→ `packedAttackUpdates`) instead of re-sending whole attack arrays.
@@ -251,17 +263,22 @@ export class PlayerImpl implements Player {
       (prev.tilesOwned !== full.tilesOwned ||
         prev.gold !== full.gold ||
         prev.troops !== full.troops ||
-        prev.goldEarned !== full.goldEarned)
+        prev.goldEarned !== full.goldEarned ||
+        prev.researchPoints !== full.researchPoints)
     ) {
       // goldEarned gets its own comparison: it can change even when gold
       // nets back to its previous value within one tick (addGold followed
-      // by removeGold), and the quint must still flush then.
+      // by removeGold), and the sextuple must still flush then.
+      // researchPoints accrues every tick while a player's gold may sit
+      // still (no income, or only spending), so it needs its own comparison
+      // or the research HUD would show a frozen balance.
       statsOut.push(
         full.smallID!,
         full.tilesOwned!,
         Number(full.gold),
         full.troops!,
         Number(full.goldEarned),
+        full.researchPoints ?? 0,
       );
     }
     if (attackTroopsOut !== undefined) {
@@ -398,6 +415,8 @@ export class PlayerImpl implements Player {
       piracyGold: this._piracyGold,
       goldEarned: this._goldEarned,
       troops: this.troops(),
+      researchPoints: this._researchPoints,
+      researchedTechs: this._researchedTechMask,
       allies: allies,
       embargoes: embargoes,
       isTraitor: this.isTraitor(),
@@ -1389,6 +1408,49 @@ export class PlayerImpl implements Player {
     return Number(toRemove);
   }
 
+  researchPoints(): number {
+    return this._researchPoints;
+  }
+
+  addResearchPoints(points: number): void {
+    if (points <= 0) {
+      return;
+    }
+    this._researchPoints += Math.floor(points);
+  }
+
+  hasTech(tech: TechId): boolean {
+    return (this._researchedTechMask & (1 << techBit(tech))) !== 0;
+  }
+
+  researchedTechMask(): number {
+    return this._researchedTechMask;
+  }
+
+  canResearch(tech: TechId): boolean {
+    if (!this.isAlive() || this.hasTech(tech)) {
+      return false;
+    }
+    const def = techById(tech);
+    for (const required of def.requires) {
+      if (!this.hasTech(required)) {
+        return false;
+      }
+    }
+    return this._researchPoints >= def.researchPoints && this._gold >= def.gold;
+  }
+
+  researchTech(tech: TechId): boolean {
+    if (!this.canResearch(tech)) {
+      return false;
+    }
+    const def = techById(tech);
+    this._researchPoints -= def.researchPoints;
+    this.removeGold(def.gold);
+    this._researchedTechMask |= 1 << techBit(tech);
+    return true;
+  }
+
   captureUnit(unit: Unit): void {
     if (unit.owner() === this) {
       throw new Error(`Cannot capture unit, ${this} already owns ${unit}`);
@@ -1458,6 +1520,10 @@ export class PlayerImpl implements Player {
     knownCost: Gold | null = null,
   ): boolean {
     if (this.mg.config().isUnitDisabled(unitType)) {
+      return false;
+    }
+    const requiredTech = techForUnit(unitType);
+    if (requiredTech !== undefined && !this.hasTech(requiredTech)) {
       return false;
     }
     const cost = knownCost ?? this.mg.unitInfo(unitType).cost(this.mg, this);
@@ -1622,6 +1688,9 @@ export class PlayerImpl implements Player {
         return this.tradeShipSpawn(targetTile);
       case UnitType.Train:
         return this.landBasedUnitSpawn(targetTile);
+      case UnitType.Tank:
+      case UnitType.Plane:
+        return this.mg.isValidRef(targetTile) ? targetTile : false;
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
       case UnitType.SAMLauncher:
@@ -1973,6 +2042,8 @@ export class PlayerImpl implements Player {
       random: w.random(this._pseudo_random),
       gold: this._gold,
       troops: this._troops,
+      researchPoints: this._researchPoints,
+      researchedTechs: this._researchedTechMask,
       tradeGold: this._tradeGold,
       trainGold: this._trainGold,
       piracyGold: this._piracyGold,
@@ -2045,6 +2116,8 @@ export class PlayerImpl implements Player {
     this._pseudo_random = r.random(s.random);
     this._gold = s.gold;
     this._troops = s.troops;
+    this._researchPoints = s.researchPoints ?? 0;
+    this._researchedTechMask = s.researchedTechs ?? 0;
     this._tradeGold = s.tradeGold;
     this._trainGold = s.trainGold;
     this._piracyGold = s.piracyGold;
@@ -2120,6 +2193,8 @@ export const PlayerSnapshot = snapshotType({
     random: zRandom(),
     gold: z.bigint(),
     troops: z.bigint(),
+    researchPoints: zInt().optional(),
+    researchedTechs: zInt().optional(),
     tradeGold: z.bigint(),
     trainGold: z.bigint(),
     piracyGold: z.bigint(),

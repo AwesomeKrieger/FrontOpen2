@@ -9,6 +9,7 @@ import {
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
 import { PlayerLike } from "@openfront/engine-api/game/ReadViews";
+import { TechId } from "@openfront/engine-api/game/TechTree";
 import { TeamCountConfig } from "@openfront/engine-api/Schemas";
 import { NukeType } from "@openfront/engine-api/StatsSchemas";
 import { Config } from "@openfront/engine-lib/configuration/Config";
@@ -269,7 +270,9 @@ export class EngineConfig extends Config {
     // Sigmoid: concave start, sharp S-curve middle, linear end - heavily punishes trades under range debuff.
     const debuff = this.tradeShipShortRangeDebuff();
     const baseGold = 75_000 / (1 + exp(-0.03 * (dist - debuff))) + 50 * dist;
-    return BigInt(Math.floor(baseGold * this.goldMultiplierFor(player)));
+    const gold = BigInt(Math.floor(baseGold * this.goldMultiplierFor(player)));
+    // Trade: +25% trade ship revenue, in exact integer gold.
+    return player.hasTech(TechId.Trade) ? (gold * 5n) / 4n : gold;
   }
 
   /**
@@ -385,6 +388,16 @@ export class EngineConfig extends Config {
           (numUnits: number) => Math.min(1_000_000, pow2(numUnits) * 125_000),
           UnitType.Factory,
           UnitType.Port,
+        );
+      case UnitType.Tank:
+        return this.costWrapper(
+          (numUnits: number) => Math.min(1_500_000, (numUnits + 1) * 300_000),
+          UnitType.Tank,
+        );
+      case UnitType.Plane:
+        return this.costWrapper(
+          (numUnits: number) => Math.min(2_000_000, (numUnits + 1) * 400_000),
+          UnitType.Plane,
         );
       case UnitType.TransportShip:
       case UnitType.Shell:

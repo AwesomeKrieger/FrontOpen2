@@ -983,6 +983,9 @@ export function apexPathFor(pathname: string): string {
  * this exists to avoid writing (PagePin.ts).
  */
 export function currentPagePath(path: string): string {
+  // A static deployment path (GitHub Pages) cannot serve "/v/<commit>/…"
+  // pages at all; its routes are relative to the page it is on.
+  if (ClientEnv.servedFromSubPath()) return path;
   const commit = pagePin();
   return commit === null ? path : `/v/${commit}${path}`;
 }
@@ -1003,5 +1006,7 @@ export function homeHref(): string {
   if (siteHost !== undefined && window.location.host !== siteHost) {
     return `https://${siteHost}/`;
   }
-  return "/";
+  // Behind a deployment path (GitHub Pages): the page itself, not the origin
+  // root, which no server answers for.
+  return ClientEnv.servedFromSubPath() ? ClientEnv.pageHref("/") : "/";
 }

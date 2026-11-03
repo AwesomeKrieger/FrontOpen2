@@ -72,6 +72,7 @@ describe("live trade revenue counters", () => {
       Number(p.gold()),
       p.troops(),
       Number(p.goldEarned()),
+      p.researchPoints(),
     ]);
   });
 

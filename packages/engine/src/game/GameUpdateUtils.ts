@@ -23,11 +23,12 @@ import {
  * field missing here is never diffed, so its changes silently never reach the
  * main thread after the first update.
  *
- * EXCEPTION: tilesOwned / gold / troops / goldEarned are deliberately NOT
- * diffed here. They change for nearly every alive player every tick, so they
- * travel on the transferable `GameUpdateViewData.packedPlayerUpdates` channel
- * instead (see PlayerImpl.toUpdate) and appear in PlayerUpdate objects only on
- * a player's first (full) emission.
+ * EXCEPTION: tilesOwned / gold / troops / goldEarned / researchPoints are
+ * deliberately NOT diffed here. They change for nearly every alive player
+ * every tick, so they travel on the transferable
+ * `GameUpdateViewData.packedPlayerUpdates` channel instead (see
+ * PlayerImpl.toUpdate) and appear in PlayerUpdate objects only on a player's
+ * first (full) emission.
  */
 export function diffPlayerUpdate(
   prev: PlayerUpdate,
@@ -59,6 +60,7 @@ export function diffPlayerUpdate(
     prev.markedDoomsdayClockTick === next.markedDoomsdayClockTick &&
     prev.isDecaying === next.isDecaying &&
     prev.hasSpawned === next.hasSpawned &&
+    prev.researchedTechs === next.researchedTechs &&
     prev.spawnTile === next.spawnTile &&
     prev.betrayals === next.betrayals &&
     prev.lastDeleteUnitTick === next.lastDeleteUnitTick &&
@@ -122,6 +124,10 @@ export function diffPlayerUpdate(
     prev.markedDoomsdayClockTick === next.markedDoomsdayClockTick,
   );
   setIfDifferent("isDecaying", prev.isDecaying === next.isDecaying);
+  setIfDifferent(
+    "researchedTechs",
+    prev.researchedTechs === next.researchedTechs,
+  );
   setIfDifferent("hasSpawned", prev.hasSpawned === next.hasSpawned);
   setIfDifferent("spawnTile", prev.spawnTile === next.spawnTile);
   setIfDifferent("betrayals", prev.betrayals === next.betrayals);

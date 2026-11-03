@@ -24,6 +24,7 @@ import type {
 } from "../snapshot/SnapshotContext";
 import { PlayerExecution } from "./PlayerExecution";
 import { TribeExecution } from "./TribeExecution";
+import { TribeResearchExecution } from "./TribeResearchExecution";
 import { getSpawnTiles } from "./Util";
 
 type Spawn = { center: TileRef; tiles: TileRef[] };
@@ -111,6 +112,7 @@ export class SpawnExecution implements Execution {
       this.mg.addExecution(new PlayerExecution(player));
       if (player.type() === PlayerType.Bot) {
         this.mg.addExecution(new TribeExecution(player));
+        this.mg.addExecution(new TribeResearchExecution(player));
       }
     }
 

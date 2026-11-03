@@ -20,8 +20,10 @@ import { FactoryExecution } from "./FactoryExecution";
 import { MirvExecution } from "./MIRVExecution";
 import { MissileSiloExecution } from "./MissileSiloExecution";
 import { NukeExecution } from "./NukeExecution";
+import { PlaneExecution } from "./PlaneExecution";
 import { PortExecution } from "./PortExecution";
 import { SAMLauncherExecution } from "./SAMLauncherExecution";
+import { TankExecution } from "./TankExecution";
 import { WarshipExecution } from "./WarshipExecution";
 
 export class ConstructionExecution implements Execution {
@@ -143,6 +145,12 @@ export class ConstructionExecution implements Execution {
         this.mg.addExecution(
           new WarshipExecution({ owner: player, patrolTile: this.tile }),
         );
+        break;
+      case UnitType.Tank:
+        this.mg.addExecution(new TankExecution(player, this.tile));
+        break;
+      case UnitType.Plane:
+        this.mg.addExecution(new PlaneExecution(player, this.tile));
         break;
       case UnitType.Port:
         this.mg.addExecution(new PortExecution(this.structure!));

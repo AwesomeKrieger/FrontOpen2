@@ -16,6 +16,7 @@ import {
   Trios,
   UnitType,
 } from "./game/GameTypes";
+import { TechId } from "./game/TechTree";
 import { PlayerStatsSchema } from "./StatsSchemas";
 
 export type GameID = string;
@@ -36,6 +37,7 @@ export type Intent =
   | DonateGoldIntent
   | DonateTroopsIntent
   | BuildUnitIntent
+  | ResearchTechIntent
   | EmbargoIntent
   | QuickChatIntent
   | MoveWarshipIntent
@@ -63,6 +65,7 @@ export type DonateGoldIntent = z.infer<typeof DonateGoldIntentSchema>;
 export type DonateTroopsIntent = z.infer<typeof DonateTroopIntentSchema>;
 export type EmbargoIntent = z.infer<typeof EmbargoIntentSchema>;
 export type BuildUnitIntent = z.infer<typeof BuildUnitIntentSchema>;
+export type ResearchTechIntent = z.infer<typeof ResearchTechIntentSchema>;
 export type UpgradeStructureIntent = z.infer<
   typeof UpgradeStructureIntentSchema
 >;
@@ -498,6 +501,11 @@ export const BuildUnitIntentSchema = z.object({
   amount: zb.uint({ min: 1, max: MAX_UPGRADE_AMOUNT }).optional(),
 });
 
+export const ResearchTechIntentSchema = z.object({
+  type: z.literal("research_tech"),
+  tech: z.enum(TechId),
+});
+
 export const UpgradeStructureIntentSchema = z.object({
   type: z.literal("upgrade_structure"),
   unit: z.enum(UnitType),
@@ -582,6 +590,7 @@ export const IntentSchema = z.discriminatedUnion("type", [
   DonateGoldIntentSchema,
   DonateTroopIntentSchema,
   BuildUnitIntentSchema,
+  ResearchTechIntentSchema,
   UpgradeStructureIntentSchema,
   EmbargoIntentSchema,
   EmbargoAllIntentSchema,

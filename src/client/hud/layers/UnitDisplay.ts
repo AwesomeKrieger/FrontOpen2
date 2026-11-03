@@ -5,6 +5,7 @@ import {
   PlayerBuildableUnitType,
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
+import { techForUnit } from "@openfront/engine-api/game/TechTree";
 import { renderNumber } from "@openfront/engine-lib/Format";
 import { EventBus } from "@openfront/shared/EventBus";
 import { html, LitElement, nothing } from "lit";
@@ -34,6 +35,8 @@ import {
   missileSiloIcon,
   portIcon,
   samLauncherIcon,
+  tankIcon,
+  planeIcon,
   warshipIcon,
 } from "../HotbarIcons";
 import { TutorialHighlight, TutorialHighlightEvent } from "../Tutorial";
@@ -59,6 +62,8 @@ export class UnitDisplay extends LitElement implements Controller {
   private _port = 0;
   private _defensePost = 0;
   private _samLauncher = 0;
+  private _tank = 0;
+  private _plane = 0;
   private allDisabled = false;
   private enabledUnitCount = 0;
   private tutorialMode = false;
@@ -419,6 +424,13 @@ export class UnitDisplay extends LitElement implements Controller {
   private canBuild(item: UnitType): boolean {
     if (this.game?.config().isUnitDisabled(item)) return false;
     const player = this.game?.myPlayer();
+    // Tech-gated units (tanks, planes) cannot be placed before their tech is
+    // researched; the engine would reject the build, so the bar shows them
+    // greyed out instead.
+    const requiredTech = techForUnit(item);
+    if (requiredTech !== undefined && player && !player.hasTech(requiredTech)) {
+      return false;
+    }
     switch (item) {
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
@@ -458,6 +470,8 @@ export class UnitDisplay extends LitElement implements Controller {
     this._port = player.totalUnitLevels(UnitType.Port);
     this._defensePost = player.totalUnitLevels(UnitType.DefensePost);
     this._samLauncher = player.totalUnitLevels(UnitType.SAMLauncher);
+    this._tank = player.units(UnitType.Tank).length;
+    this._plane = player.units(UnitType.Plane).length;
     this._factories = player.totalUnitLevels(UnitType.Factory);
     this._warships = player.totalUnitLevels(UnitType.Warship);
     this.requestUpdate();
@@ -548,6 +562,20 @@ export class UnitDisplay extends LitElement implements Controller {
               UnitType.Warship,
               "warship",
               this.getHotkey("buildWarship", "Digit7"),
+            )}
+            ${this.renderUnitItem(
+              tankIcon,
+              this._tank,
+              UnitType.Tank,
+              "tank",
+              "",
+            )}
+            ${this.renderUnitItem(
+              planeIcon,
+              this._plane,
+              UnitType.Plane,
+              "plane",
+              "",
             )}
             ${this.renderUnitItem(
               atomBombIcon,

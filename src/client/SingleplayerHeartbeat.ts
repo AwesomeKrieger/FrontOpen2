@@ -22,6 +22,9 @@ export const SINGLEPLAYER_HEARTBEAT_INTERVAL_MS = 60_000;
  * Returns a function that stops the heartbeat.
  */
 export function startSingleplayerHeartbeat(gameID: GameID): () => void {
+  // A static page (GitHub Pages) runs no game server at all: there is nothing
+  // to report to, and every beat would be a request into the void.
+  if (!ClientEnv.hasServer()) return () => {};
   const beat = () => {
     try {
       const url = `${ClientEnv.gameHttpBase(gameID)}/${ClientEnv.gameWorkerPath(gameID)}/api/singleplayer/${gameID}/heartbeat`;

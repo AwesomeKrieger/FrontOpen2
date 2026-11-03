@@ -21,6 +21,7 @@ import {
   PlayerUpdate,
 } from "@openfront/engine-api/game/GameUpdates";
 import { PlayerLike } from "@openfront/engine-api/game/ReadViews";
+import { TechId, techBit } from "@openfront/engine-api/game/TechTree";
 import { ClientID } from "@openfront/engine-api/Schemas";
 import { PatternDecoder } from "@openfront/shared/PatternDecoder";
 import { createRandomName } from "@openfront/shared/SharedUtil";
@@ -478,6 +479,18 @@ export class PlayerView implements PlayerLike {
 
   troops(): number {
     return this.state.troops;
+  }
+
+  researchPoints(): number {
+    return this.state.researchPoints;
+  }
+
+  researchedTechs(): number {
+    return this.state.researchedTechs;
+  }
+
+  hasTech(tech: TechId): boolean {
+    return (this.state.researchedTechs & (1 << techBit(tech))) !== 0;
   }
 
   totalUnitLevels(type: UnitType): number {

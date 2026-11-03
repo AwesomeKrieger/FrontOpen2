@@ -17,6 +17,8 @@ vi.mock("src/client/ClientEnv", () => ({
   ClientEnv: {
     turnIntervalMs: vi.fn(() => 100),
     gitCommit: vi.fn(() => "DEV"),
+    // A server-rendered page: the singleplayer presence heartbeat runs.
+    hasServer: vi.fn(() => true),
   },
 }));
 

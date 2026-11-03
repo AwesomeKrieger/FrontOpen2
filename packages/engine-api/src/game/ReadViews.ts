@@ -6,6 +6,7 @@ import {
   TerraNullius,
   UnitType,
 } from "./GameTypes";
+import { TechId } from "./TechTree";
 
 /*
  * Read-only views of game state that rules code (Config, UnitGrid,
@@ -27,6 +28,8 @@ export interface PlayerLike {
   troops(): number;
   gold(): Gold;
   units(type: UnitType): readonly UnitLike[];
+  /** Whether this player has researched `tech` (see game/TechTree). */
+  hasTech(tech: TechId): boolean;
 }
 
 export interface UnitLike {
