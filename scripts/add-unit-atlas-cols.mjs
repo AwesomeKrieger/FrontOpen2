@@ -176,12 +176,7 @@ const out = Buffer.alloc(newWidth * height * 4);
 // linear bytes.copy() would splice source rows together and bleed sprite
 // data across column boundaries.
 for (let y = 0; y < height; y++) {
-  pixels.copy(
-    out,
-    y * newWidth * 4,
-    y * width * 4,
-    (y + 1) * width * 4,
-  );
+  pixels.copy(out, y * newWidth * 4, y * width * 4, (y + 1) * width * 4);
 }
 // Sanity: the extended image must match the source exactly in columns 0..baseCols-1.
 for (let y = 0; y < height; y++) {
