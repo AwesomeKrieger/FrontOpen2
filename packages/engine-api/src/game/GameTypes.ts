@@ -236,6 +236,9 @@ export const BuildableAttacks = unitTypeGroup([
   UnitType.HydrogenBomb,
   UnitType.MIRV,
   UnitType.Warship,
+  // Ground units that roll out toward the clicked tile and attack on the way:
+  // selecting "Tank" in the attack (radial) menu builds it against that tile.
+  UnitType.Tank,
 ] as const);
 
 /** Ground units: move over land, take damage, fight other units. */
@@ -259,9 +262,11 @@ export const Structures = unitTypeGroup([
   UnitType.Factory,
 ] as const);
 
+// Tank lives in both BuildableAttacks (attack radial menu) and MobileUnits
+// (build menu), so dedupe it here to keep one entry per unit type.
 export const BuildMenus = unitTypeGroup([
   ...Structures.types,
-  ...BuildableAttacks.types,
+  ...BuildableAttacks.types.filter((t) => !MobileUnits.has(t)),
   ...MobileUnits.types,
 ] as const);
 
