@@ -20,8 +20,8 @@
  * Usage: node scripts/add-unit-atlas-cols.mjs
  */
 
-import { deflateSync, inflateSync } from "node:zlib";
 import { readFileSync, writeFileSync } from "node:fs";
+import { deflateSync, inflateSync } from "node:zlib";
 
 const ATLAS_URL = "resources/atlases/unit-atlas.png";
 const CELL = 13;
