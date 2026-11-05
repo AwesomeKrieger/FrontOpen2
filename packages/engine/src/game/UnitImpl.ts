@@ -72,7 +72,7 @@ export class UnitImpl implements Unit {
     params: AllUnitParams = {},
   ) {
     this._lastTile = _tile;
-    this._health = toInt(this.mg.unitInfo(_type).maxHealth ?? 1);
+    this._health = toInt(this.maxHealth());
     this._targetTile =
       "targetTile" in params ? (params.targetTile ?? undefined) : undefined;
     this._targetPlayer =
@@ -283,9 +283,14 @@ export class UnitImpl implements Unit {
 
   maxHealth(): number {
     const base = this.info().maxHealth ?? 1;
+    // Tanks get a bonus from the ReinforcedArmor tech.
+    const multiplied =
+      this._type === UnitType.Tank
+        ? base * this.mg.config().tankHealthMultiplier(this._owner)
+        : base;
     // veterancy() is 0 for non-warships, so this returns base for them.
     return maxHealthWithVeterancy(
-      base,
+      multiplied,
       this.veterancy(),
       this.mg.config().warshipVeterancyHealthBonus(),
     );

@@ -1659,11 +1659,29 @@ export class PlayerImpl implements Player {
     return this.canSpawnUnitType(unitType, targetTile, validTiles);
   }
 
+  private hasLiveStructure(type: UnitType): boolean {
+    return this.units(type).some(
+      (u) => u.isActive() && !u.isUnderConstruction(),
+    );
+  }
+
   private canSpawnUnitType(
     unitType: UnitType,
     targetTile: TileRef,
     validTiles: TileRef[] | null,
   ): TileRef | false {
+    // A tank rolls out of a factory and a plane takes off from a city:
+    // without the live prerequisite structure the spawn is rejected up front
+    // so the menu shows it as unaffordable instead of silently doing nothing.
+    if (
+      unitType === UnitType.Tank &&
+      !this.hasLiveStructure(UnitType.Factory)
+    ) {
+      return false;
+    }
+    if (unitType === UnitType.Plane && !this.hasLiveStructure(UnitType.City)) {
+      return false;
+    }
     switch (unitType) {
       case UnitType.MIRV:
         if (!this.mg.hasOwner(targetTile)) {

@@ -249,10 +249,10 @@ export class Config {
         };
         break;
       case UnitType.Tank:
-        info = { maxHealth: 800 };
+        info = { maxHealth: 1500 };
         break;
       case UnitType.Plane:
-        info = { maxHealth: 300 };
+        info = { maxHealth: 900 };
         break;
       case UnitType.TransportShip:
       case UnitType.SAMMissile:
@@ -316,12 +316,17 @@ export class Config {
 
   /** Radius (in tiles) a tank hits every tick it is in combat. */
   tankAttackRange(): number {
-    return 4;
+    return 6;
   }
 
   /** Troops a tank destroys per tick against a hostile player's territory. */
   tankDamage(): number {
-    return 150;
+    return 400;
+  }
+
+  /** Ticks between a tank's shell shots at hostile units in range. */
+  tankShellCooldown(): number {
+    return 15;
   }
 
   /** Radius (in tiles) of a plane's bombing run. */
@@ -331,7 +336,7 @@ export class Config {
 
   /** Troops a plane's bombing run destroys. */
   planeDamage(): number {
-    return 800;
+    return 2500;
   }
 
   private hasInfiniteTroopsFor(player: PlayerLike): boolean {

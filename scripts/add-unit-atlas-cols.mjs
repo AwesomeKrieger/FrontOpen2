@@ -201,42 +201,75 @@ function px(x, y, gray) {
   out[off + 3] = 255;
 }
 
-// Rect helper: filled gray rectangle.
-function rect(x, y, w, h, gray) {
-  for (let yy = y; yy < y + h; yy++) {
-    for (let xx = x; xx < x + w; xx++) px(xx, yy, gray);
+// Rect helper removed: sprites are drawn from string matrices via sprite().
+
+// Sprite helper: draws a string-matrix pixel art sprite. Band characters map
+// to the gray values above ('.' = transparent); every pixel of the sprite that
+// touches a transparent pixel gets the DARK band, giving the sprite a strong
+// outline so it reads clearly against any terrain.
+const BANDS = { L: LIGHT, M: MID, C: CENTER, D: DARK };
+
+function sprite(x0, y0, rows) {
+  const h = rows.length;
+  const w = rows[0].length;
+  const at = (x, y) => (x >= 0 && x < w && y >= 0 && y < h ? rows[y][x] : ".");
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const ch = rows[y][x];
+      if (ch === "." || ch === undefined) continue;
+      const outlined =
+        at(x - 1, y) === "." ||
+        at(x + 1, y) === "." ||
+        at(x, y - 1) === "." ||
+        at(x, y + 1) === ".";
+      px(x0 + x, y0 + y, outlined ? DARK : BANDS[ch]);
+    }
   }
 }
 
-// Col 12: Tank (11×11 within the cell's 1..12 margin), facing up.
+// Col 12: Tank — chunky hull with full-length tracks, turret on top, barrel
+// pointing up, so it faces the same way as the other sprites.
 {
-  const X = baseCols * CELL + 1;
-  // Barrel (center band) — 1px wide, 4px long, up from the turret.
-  rect(X + 5, 1, 1, 4, CENTER);
-  // Turret (light band)
-  rect(X + 3, 4, 5, 4, LIGHT);
-  // Turret hatch (center accent)
-  rect(X + 5, 5, 1, 2, CENTER);
-  // Hull (mid band)
-  rect(X + 2, 8, 7, 3, MID);
-  // Tracks (dark band), slightly wider than the hull
-  rect(X + 1, 8, 1, 3, DARK);
-  rect(X + 9, 8, 1, 3, DARK);
-  rect(X + 1, 10, 9, 1, DARK);
+  const X = baseCols * CELL;
+  sprite(X, 0, [
+    ".....CCC.....",
+    ".....CCC.....",
+    ".....CCC.....",
+    "....LLLLL....",
+    "....LCLCL....",
+    "....LLLLL....",
+    "....LLLLL....",
+    "..MMMMMMMMM..",
+    "..MMMMMMMMM..",
+    "..MMMMMMMMM..",
+    "..MMMMMMMMM..",
+    "..MMMMMMMMM..",
+  ]);
+  // Tracks: full-length dark columns flanking the hull.
+  for (let y = 7; y <= 11; y++) {
+    px(X + 1, y, DARK);
+    px(X + 2, y, DARK);
+    px(X + 10, y, DARK);
+    px(X + 11, y, DARK);
+  }
 }
 
-// Col 13: Plane (9×9), nose up like the other sprites.
+// Col 13: Plane — wide wings and a strong fuselage, nose up.
 {
-  const X = (baseCols + 1) * CELL + 2;
-  // Fuselage (center band)
-  rect(X + 4, 2, 1, 8, CENTER);
-  // Nose (light band)
-  rect(X + 3, 2, 3, 2, LIGHT);
-  // Wings (mid band)
-  rect(X + 1, 5, 7, 1, MID);
-  rect(X + 2, 4, 5, 1, MID);
-  // Tail (dark band)
-  rect(X + 2, 9, 5, 1, DARK);
+  const X = (baseCols + 1) * CELL;
+  sprite(X, 0, [
+    "......L......",
+    ".....LLL.....",
+    ".....CCC.....",
+    ".....CCC.....",
+    "..MMMMMMMMM..",
+    "..MMMMMMMMM..",
+    ".....CCC.....",
+    ".....CCC.....",
+    "....LLLLL....",
+    "....LLLLL....",
+    ".....LLL.....",
+  ]);
 }
 
 writeFileSync(ATLAS_URL, encodePng(newWidth, height, out));

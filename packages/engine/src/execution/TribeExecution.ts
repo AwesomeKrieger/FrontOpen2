@@ -1,4 +1,6 @@
-﻿import { Structures } from "@openfront/engine-api/game/GameTypes";
+﻿import { TileRef } from "@openfront/engine-api/game/GameMap";
+import { Structures, UnitType } from "@openfront/engine-api/game/GameTypes";
+import { TechId } from "@openfront/engine-api/game/TechTree";
 import { PseudoRandom } from "@openfront/engine-lib/PseudoRandom";
 import {
   VersionedSchema,
@@ -16,8 +18,17 @@ import type {
   SnapshotWriter,
 } from "../snapshot/SnapshotContext";
 import { AllianceExtensionExecution } from "./alliance/AllianceExtensionExecution";
+import { ConstructionExecution } from "./ConstructionExecution";
 import { DeleteUnitExecution } from "./DeleteUnitExecution";
+import { PlaneExecution } from "./PlaneExecution";
+import { TankExecution } from "./TankExecution";
 import { TribeAttackBehavior } from "./TribeAttackBehavior";
+import { closestTile } from "./Util";
+
+// How many tanks and planes a tribe keeps alive at once. The build cadence
+// follows the tribe's attack ticks, so one unit is queued per cycle at most.
+const BOT_MAX_TANKS = 4;
+const BOT_MAX_PLANES = 3;
 
 export class TribeExecution implements Execution {
   private active = true;
@@ -82,7 +93,111 @@ export class TribeExecution implements Execution {
 
     this.acceptAllAllianceRequests();
     this.deleteNextStructure();
+    this.maybeBuild();
     this.maybeAttack();
+  }
+
+  /**
+   * Bot building, on the tribe's attack-tick cadence. Stateless on purpose:
+   * every cycle it checks prerequisites and affordability and queues at most
+   * one construction. Factory first (tanks roll out of it), then City (planes
+   * take off from it and both add income), then defensive units at the front.
+   */
+  private maybeBuild() {
+    const hasLive = (type: UnitType) =>
+      this.tribe
+        .units(type)
+        .some((u) => u.isActive() && !u.isUnderConstruction());
+
+    if (!hasLive(UnitType.Factory)) {
+      this.buildStructure(UnitType.Factory);
+    }
+    if (!hasLive(UnitType.City)) {
+      this.buildStructure(UnitType.City);
+    }
+
+    if (
+      this.tribe.hasTech(TechId.Armor) &&
+      hasLive(UnitType.Factory) &&
+      this.countLive(UnitType.Tank) < BOT_MAX_TANKS
+    ) {
+      this.buildTank();
+    }
+    if (
+      this.tribe.hasTech(TechId.Aviation) &&
+      hasLive(UnitType.City) &&
+      this.countLive(UnitType.Plane) < BOT_MAX_PLANES
+    ) {
+      this.buildPlane();
+    }
+  }
+
+  private countLive(type: UnitType): number {
+    return this.tribe.units(type).filter((u) => u.isActive()).length;
+  }
+
+  /** Queue one structure on a border tile the tribe can actually build on. */
+  private buildStructure(type: UnitType): boolean {
+    for (const tile of this.tribe.borderTiles()) {
+      if (this.mg.owner(tile) !== this.tribe) continue;
+      const spawn = this.tribe.canBuild(type, tile);
+      if (spawn !== false) {
+        this.mg.addExecution(
+          new ConstructionExecution(this.tribe, type, spawn),
+        );
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Queue one tank rolling out of the live factory toward hostile land. */
+  private buildTank(): boolean {
+    const factory = this.tribe
+      .units(UnitType.Factory)
+      .find((u) => u.isActive() && !u.isUnderConstruction());
+    if (factory === undefined) return false;
+    const target = this.nearestHostileTile(factory.tile());
+    if (target === null) return false;
+    if (this.tribe.canBuild(UnitType.Tank, target) === false) return false;
+    this.mg.addExecution(new TankExecution(this.tribe, target));
+    return true;
+  }
+
+  /** Queue one plane taking off from the live city toward a hostile city. */
+  private buildPlane(): boolean {
+    const city = this.tribe
+      .units(UnitType.City)
+      .find((u) => u.isActive() && !u.isUnderConstruction());
+    if (city === undefined) return false;
+
+    const hostileCities: TileRef[] = [];
+    for (const p of this.mg.players()) {
+      if (!p.isPlayer() || !p.isAlive() || this.tribe.isFriendly(p)) continue;
+      for (const c of p.units(UnitType.City)) {
+        if (c.isActive()) hostileCities.push(c.tile());
+      }
+    }
+    const [target] = closestTile(this.mg, hostileCities, city.tile());
+    if (target === null) return false;
+    if (this.tribe.canBuild(UnitType.Plane, target) === false) return false;
+    this.mg.addExecution(new PlaneExecution(this.tribe, target));
+    return true;
+  }
+
+  /** Nearest border tile of a hostile player to `from`, or null. */
+  private nearestHostileTile(from: TileRef): TileRef | null {
+    let best: TileRef | null = null;
+    let bestDist = Infinity;
+    for (const p of this.mg.players()) {
+      if (!p.isPlayer() || !p.isAlive() || this.tribe.isFriendly(p)) continue;
+      const [tile, dist] = closestTile(this.mg, p.borderTiles(), from);
+      if (tile !== null && dist < bestDist) {
+        bestDist = dist;
+        best = tile;
+      }
+    }
+    return best;
   }
 
   private acceptAllAllianceRequests() {

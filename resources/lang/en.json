@@ -2243,7 +2243,6 @@
     "button": "Research",
     "hint": "Cities and factories generate research points. Click a technology to unlock it.",
     "income": "+{points}/s",
-    "points": "Research Points",
     "points_short": "RP",
     "requires": "Requires",
     "researched": "Researched",

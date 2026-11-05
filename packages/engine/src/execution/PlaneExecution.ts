@@ -117,7 +117,7 @@ export class PlaneExecution implements Execution {
     for (const { unit: sam } of samTargets) {
       const range = this.mg.config().samRange(sam.level());
       if (this.mg.manhattanDist(sam.tile(), this.plane.tile()) <= range) {
-        this.plane.modifyHealth(-60, sam.owner() as Player);
+        this.plane.modifyHealth(-40, sam.owner() as Player);
         if (!this.plane.isActive()) {
           this.active = false;
           return;

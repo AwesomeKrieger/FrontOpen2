@@ -2,6 +2,7 @@ import { TileRef } from "@openfront/engine-api/game/GameMap";
 import { PlayerType, UnitType } from "@openfront/engine-api/game/GameTypes";
 import { TechId } from "@openfront/engine-api/game/TechTree";
 import {
+  zInt,
   zPlayerRef,
   zRef,
   zTile,
@@ -14,6 +15,7 @@ import type {
   SnapshotReader,
   SnapshotWriter,
 } from "../snapshot/SnapshotContext";
+import { ShellExecution } from "./ShellExecution";
 
 /**
  * A tank: a ground unit that rolls from its factory toward a target tile and
@@ -28,6 +30,8 @@ export class TankExecution implements Execution {
   private active = true;
   private mg: Game;
   private tank: Unit | null = null;
+  // Tick the tank last fired a shell; shifted back so the first shot is free.
+  private lastShellTick = -1000;
 
   constructor(
     private player: Player,
@@ -158,6 +162,29 @@ export class TankExecution implements Execution {
       [UnitType.Tank, UnitType.Plane],
       ({ unit }) => this.isHostileUnit(unit as Unit),
     );
+
+    // Every few ticks the tank fires a visible shell at the closest hostile
+    // unit in range, so tank combat is readable on the map.
+    const now = this.mg.ticks();
+    if (
+      now - this.lastShellTick >= config.tankShellCooldown() &&
+      targets.length > 0
+    ) {
+      let target = targets[0].unit as Unit;
+      let bestDist = this.mg.manhattanDist(this.tank.tile(), target.tile());
+      for (const { unit } of targets) {
+        const dist = this.mg.manhattanDist(this.tank.tile(), unit.tile());
+        if (dist < bestDist) {
+          bestDist = dist;
+          target = unit as Unit;
+        }
+      }
+      this.mg.addExecution(
+        new ShellExecution(this.tank.tile(), this.player, this.tank, target),
+      );
+      this.lastShellTick = now;
+    }
+
     const healthDamage = Math.floor(damage / 2);
     for (const { unit } of targets) {
       unit.modifyHealth(-healthDamage, this.player);
@@ -217,6 +244,7 @@ export class TankExecution implements Execution {
       tank: w.unitOrNull(this.tank),
       tankUnit: w.unitOrNull(this.tankUnit),
       aiControlled: this.player.type() === PlayerType.Bot,
+      lastShellTick: this.lastShellTick,
     });
   }
 
@@ -227,6 +255,8 @@ export class TankExecution implements Execution {
     this.targetTile = s.targetTile;
     this.tank = r.unitOrNull(s.tank);
     this.tankUnit = r.unitOrNull(s.tankUnit);
+    // Optional for replay compatibility; pre-shell snapshots start cold.
+    this.lastShellTick = s.lastShellTick ?? -1000;
   }
 }
 
@@ -238,6 +268,7 @@ const TankStateSchema = z.object({
   tank: zRef().nullable(),
   tankUnit: zRef().nullable(),
   aiControlled: z.boolean(),
+  lastShellTick: zInt().optional(),
 });
 type TankState = z.infer<typeof TankStateSchema>;
 
