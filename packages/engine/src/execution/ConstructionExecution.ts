@@ -16,12 +16,14 @@ import type {
 } from "../snapshot/SnapshotContext";
 import { CityExecution } from "./CityExecution";
 import { DefensePostExecution } from "./DefensePostExecution";
+import { DroneExecution } from "./DroneExecution";
 import { FactoryExecution } from "./FactoryExecution";
 import { MirvExecution } from "./MIRVExecution";
 import { MissileSiloExecution } from "./MissileSiloExecution";
 import { NukeExecution } from "./NukeExecution";
 import { PlaneExecution } from "./PlaneExecution";
 import { PortExecution } from "./PortExecution";
+import { RobotFactoryExecution } from "./RobotFactoryExecution";
 import { SAMLauncherExecution } from "./SAMLauncherExecution";
 import { TankExecution } from "./TankExecution";
 import { WarshipExecution } from "./WarshipExecution";
@@ -152,6 +154,12 @@ export class ConstructionExecution implements Execution {
       case UnitType.Plane:
         this.mg.addExecution(new PlaneExecution(player, this.tile));
         break;
+      case UnitType.Drone:
+        this.mg.addExecution(new DroneExecution(player, this.tile));
+        break;
+      case UnitType.RobotFactory:
+        this.mg.addExecution(new RobotFactoryExecution(this.structure!));
+        break;
       case UnitType.Port:
         this.mg.addExecution(new PortExecution(this.structure!));
         break;
@@ -188,6 +196,7 @@ export class ConstructionExecution implements Execution {
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
+      case UnitType.RobotFactory:
         return true;
       default:
         return false;

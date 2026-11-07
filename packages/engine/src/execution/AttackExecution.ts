@@ -309,6 +309,14 @@ export class AttackExecution implements Execution {
     // Each tile consumes a fraction of the tick; conquer until it is spent.
     let tickBudget = 1;
 
+    // Robot factories soften the blow: while robots are in stock, a share of
+    // the attacker's troops is synthesized back instead of dying - but the
+    // attacks are robot-guided and therefore less effective.
+    const assistShare = this.mg.config().robotAssistShare(this._owner);
+    const robotsOnCall = assistShare > 0 ? this._owner.robots() : 0;
+    const damageFactor =
+      robotsOnCall > 0 ? this.mg.config().robotDamageFactor() : 1;
+
     while (tickBudget > 0) {
       if (troopCount < 1) {
         this.attack.delete();
@@ -343,11 +351,21 @@ export class AttackExecution implements Execution {
         continue;
       }
       this.addNeighbors(tileToConquer);
-      const { attackerTroopLoss, defenderTroopLoss, tickFraction } = this.mg
+      const outcomes = this.mg
         .config()
         .attackLogic(
           this.attackLogicInput(troopCount, tileToConquer, borderSize),
         );
+      let { attackerTroopLoss, defenderTroopLoss, tickFraction } = outcomes;
+      if (robotsOnCall > 0) {
+        // Robots soften both sides: they're tireless but dim, so the whole
+        // assault is less effective - and they absorb part of the losses out
+        // of stock, so the owner takes fewer human casualties.
+        attackerTroopLoss = Math.floor(attackerTroopLoss * damageFactor);
+        const avoided = Math.floor(attackerTroopLoss * assistShare);
+        attackerTroopLoss -= this._owner.useRobots(avoided);
+        defenderTroopLoss = Math.floor(defenderTroopLoss * damageFactor);
+      }
       tickBudget -= tickFraction;
       troopCount -= attackerTroopLoss;
       this.attack.setTroops(troopCount);

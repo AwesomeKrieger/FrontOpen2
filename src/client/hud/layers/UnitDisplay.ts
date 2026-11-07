@@ -5,7 +5,11 @@ import {
   PlayerBuildableUnitType,
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
-import { techForUnit } from "@openfront/engine-api/game/TechTree";
+import {
+  techForUnit,
+  TECH_ORDER,
+  TECHS,
+} from "@openfront/engine-api/game/TechTree";
 import { renderNumber } from "@openfront/engine-lib/Format";
 import { EventBus } from "@openfront/shared/EventBus";
 import { html, LitElement, nothing } from "lit";
@@ -23,7 +27,8 @@ import { Platform } from "../../Platform";
 import { UIState } from "../../UIState";
 import { UserSettings } from "../../UserSettings";
 import { resolveKeybindLabel, translateText } from "../../Utils";
-import { GameView } from "../../view";
+import type { GameView } from "../../view";
+import type { PlayerView } from "../../view/PlayerView";
 import {
   atomBombIcon,
   cityIcon,
@@ -37,9 +42,12 @@ import {
   samLauncherIcon,
   tankIcon,
   planeIcon,
+  droneIcon,
+  robotFactoryIcon,
   warshipIcon,
 } from "../HotbarIcons";
 import { TutorialHighlight, TutorialHighlightEvent } from "../Tutorial";
+import { ResearchTree } from "./ResearchTree";
 
 /** How long a build button has to be held before it shows its details (cost etc.) */
 const PEEK_HOLD_MS = 450;
@@ -64,6 +72,15 @@ export class UnitDisplay extends LitElement implements Controller {
   private _samLauncher = 0;
   private _tank = 0;
   private _plane = 0;
+  private _drone = 0;
+  private _robotFactory = 0;
+  /** Live robot stock produced by robot factories. */
+  private _robots = 0;
+  /** Live research balance for the build bar's research button. */
+  private _researchRp = 0;
+  private _researchAttention = false;
+  /** The research panel this bar's button toggles; wired by GameRenderer. */
+  public researchTree: ResearchTree | null = null;
   private allDisabled = false;
   private enabledUnitCount = 0;
   private tutorialMode = false;
@@ -472,9 +489,34 @@ export class UnitDisplay extends LitElement implements Controller {
     this._samLauncher = player.totalUnitLevels(UnitType.SAMLauncher);
     this._tank = player.units(UnitType.Tank).length;
     this._plane = player.units(UnitType.Plane).length;
+    this._drone = player.units(UnitType.Drone).length;
+    this._robotFactory = player.totalUnitLevels(UnitType.RobotFactory);
+    this._robots = player.robots();
     this._factories = player.totalUnitLevels(UnitType.Factory);
     this._warships = player.totalUnitLevels(UnitType.Warship);
+    this._researchRp = player.researchPoints();
+    this._researchAttention = this.anyTechAvailable(player);
     this.requestUpdate();
+  }
+
+  /** True when some tech is unlockable right now (Rp + gold + prereqs). */
+  private anyTechAvailable(player: PlayerView): boolean {
+    for (const id of TECH_ORDER) {
+      const tech = TECHS[id];
+      if (player.hasTech(id)) {
+        continue;
+      }
+      if (!tech.requires.every((required) => player.hasTech(required))) {
+        continue;
+      }
+      if (
+        player.researchPoints() >= tech.researchPoints &&
+        player.gold() >= tech.gold
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   render() {
@@ -487,16 +529,23 @@ export class UnitDisplay extends LitElement implements Controller {
     ) {
       return null;
     }
-    if (this.allDisabled) {
-      return null;
-    }
-    // The onboarding tutorial's one build is the atom bomb, fired from the
-    // nation's silo once captured.
     if (
       this.tutorialMode &&
       myPlayer.units(UnitType.MissileSilo).length === 0
     ) {
       return null;
+    }
+    if (this.allDisabled) {
+      // No build buttons at all, but the research entry point stays so the
+      // tech tree is still reachable from the bottom of the HUD.
+      return html`
+        <div
+          class="unit-display-root relative border-t border-white/10 p-0.5 w-full"
+          data-radial-click-through
+        >
+          ${this.renderResearchButton()}
+        </div>
+      `;
     }
     return html`
       <div
@@ -512,7 +561,7 @@ export class UnitDisplay extends LitElement implements Controller {
         >
           <div
             class="unit-display-grid grid grid-cols-[repeat(var(--unit-display-columns),minmax(0,1fr))] gap-0.5 w-full mx-auto lg:grid-rows-1 lg:grid-flow-col lg:grid-cols-none lg:auto-cols-max lg:w-fit max-lg:landscape:grid-rows-1 max-lg:landscape:grid-flow-col max-lg:landscape:grid-cols-none max-lg:landscape:auto-cols-[47px] max-lg:landscape:w-max max-[360px]:grid-cols-none max-[360px]:grid-flow-col max-[360px]:auto-cols-[44px] max-[360px]:w-max"
-            style=${`--unit-display-columns: ${this.enabledUnitCount}`}
+            style=${`--unit-display-columns: ${this.enabledUnitCount + 1}`}
           >
             ${this.renderUnitItem(
               cityIcon,
@@ -578,6 +627,20 @@ export class UnitDisplay extends LitElement implements Controller {
               "",
             )}
             ${this.renderUnitItem(
+              droneIcon,
+              this._drone,
+              UnitType.Drone,
+              "drone",
+              "",
+            )}
+            ${this.renderUnitItem(
+              robotFactoryIcon,
+              this._robotFactory,
+              UnitType.RobotFactory,
+              "robot_factory",
+              "",
+            )}
+            ${this.renderUnitItem(
               atomBombIcon,
               null,
               UnitType.AtomBomb,
@@ -598,9 +661,57 @@ export class UnitDisplay extends LitElement implements Controller {
               "mirv",
               this.getHotkey("buildMIRV", "Digit0"),
             )}
+            ${this.renderResearchButton()}
           </div>
         </div>
         ${this.renderUnitTooltip()}
+      </div>
+    `;
+  }
+
+  /**
+   * The research entry point at the far end of the build bar, next to the
+   * build buttons: shows the live research point balance and opens the tech
+   * tree panel. Highlighted while some tech is actually unlockable.
+   */
+  private renderResearchButton() {
+    const attention = this._researchAttention;
+    return html`
+      <div class="flex flex-col items-center relative gap-0.5">
+        ${
+          this._robots > 0
+            ? html`<div
+                class="min-h-0 w-full px-1 flex items-center justify-center gap-0.5 text-white lg:px-0.5"
+                title=${translateText("unit_type.robots")}
+              >
+                <span class="text-[10px] leading-none select-none">🤖</span>
+                <span class="text-[10px] leading-none lg:text-xs tabular-nums"
+                  >${renderNumber(this._robots)}</span
+                >
+              </div>`
+            : nothing
+        }
+        <div
+          class="min-h-11 w-full px-1 pb-0.5 flex items-center justify-center gap-0.5 cursor-pointer rounded-sm
+            border ${attention ? "border-green-400" : "border-slate-500"}
+            pointer-fine:hover:bg-gray-800 text-white lg:min-h-0 lg:px-0.5
+            lg:justify-start landscape:px-0.5
+            ${attention ? "text-green-400" : ""}"
+          title=${translateText("research.button")}
+          @click=${() => this.researchTree?.openPanel()}
+        >
+          <div
+            class="flex flex-col items-center gap-0 pt-0.5 lg:flex-row lg:gap-0.5 max-lg:landscape:flex-row max-lg:landscape:gap-0.5"
+          >
+            <span
+              class="flex items-center justify-center size-7 lg:size-5 max-lg:landscape:size-6 select-none"
+              >🔬</span
+            >
+            <span class="text-[10px] leading-none lg:text-xs tabular-nums"
+              >${renderNumber(this._researchRp)}</span
+            >
+          </div>
+        </div>
       </div>
     `;
   }

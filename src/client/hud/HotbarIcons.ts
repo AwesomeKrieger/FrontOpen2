@@ -21,3 +21,5 @@ export const allianceIcon = assetUrl("images/AllianceIcon.svg");
 export const traitorIcon = assetUrl("images/TraitorIcon.svg");
 export const tankIcon = assetUrl("images/TankIconWhite.svg");
 export const planeIcon = assetUrl("images/PlaneIconWhite.svg");
+export const droneIcon = assetUrl("images/DroneIconWhite.svg");
+export const robotFactoryIcon = assetUrl("images/RobotFactoryIconWhite.svg");

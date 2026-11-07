@@ -244,6 +244,8 @@ export function createRenderer(
   unitDisplay.game = game;
   unitDisplay.eventBus = eventBus;
   unitDisplay.uiState = uiState;
+  // The build bar's research button toggles this panel.
+  unitDisplay.researchTree = researchTree;
 
   const playerPanel = document.querySelector("player-panel") as PlayerPanel;
   if (!(playerPanel instanceof PlayerPanel)) {

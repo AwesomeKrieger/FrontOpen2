@@ -283,11 +283,13 @@ export class UnitImpl implements Unit {
 
   maxHealth(): number {
     const base = this.info().maxHealth ?? 1;
-    // Tanks get a bonus from the ReinforcedArmor tech.
-    const multiplied =
-      this._type === UnitType.Tank
-        ? base * this.mg.config().tankHealthMultiplier(this._owner)
-        : base;
+    // Tech bonuses: tanks get ReinforcedArmor, planes get Heavy Airframes.
+    let multiplied = base;
+    if (this._type === UnitType.Tank) {
+      multiplied *= this.mg.config().tankHealthMultiplier(this._owner);
+    } else if (this._type === UnitType.Plane) {
+      multiplied *= this.mg.config().planeHealthMultiplier(this._owner);
+    }
     // veterancy() is 0 for non-warships, so this returns base for them.
     return maxHealthWithVeterancy(
       multiplied,

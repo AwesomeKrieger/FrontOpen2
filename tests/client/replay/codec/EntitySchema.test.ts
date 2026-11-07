@@ -46,6 +46,7 @@ const basePlayer: PlayerState = {
   piracyGold: 0,
   goldEarned: 90_000,
   troops: 25_000,
+  robots: 0,
   researchPoints: 120,
   researchedTechs: 0b000001,
   isTraitor: false,
@@ -79,6 +80,7 @@ const playerAlternatives: { [K in keyof PlayerFields]: PlayerFields[K] } = {
   piracyGold: 2 ** 40, // huge
   goldEarned: 95_000,
   troops: 24_990,
+  robots: 500,
   researchPoints: 45,
   researchedTechs: 0b000011,
   isTraitor: true,

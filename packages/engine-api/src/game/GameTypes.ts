@@ -216,6 +216,8 @@ export enum UnitType {
   Factory = "Factory",
   Tank = "Tank",
   Plane = "Plane",
+  Drone = "Drone",
+  RobotFactory = "Robot Factory",
 }
 
 export enum TrainType {
@@ -239,13 +241,19 @@ export const BuildableAttacks = unitTypeGroup([
   // Ground units that roll out toward the clicked tile and attack on the way:
   // selecting "Tank" in the attack (radial) menu builds it against that tile.
   UnitType.Tank,
+  // Air units: same flow, they fly from the city/factory to the clicked tile.
+  UnitType.Plane,
+  UnitType.Drone,
 ] as const);
 
 /** Ground units: move over land, take damage, fight other units. */
 export const LandUnits = unitTypeGroup([UnitType.Tank] as const);
 
 /** Air units: fly over any terrain and strike a target tile. */
-export const AirUnits = unitTypeGroup([UnitType.Plane] as const);
+export const AirUnits = unitTypeGroup([
+  UnitType.Plane,
+  UnitType.Drone,
+] as const);
 
 /** Units that are built from the build menu but are not structures. */
 export const MobileUnits = unitTypeGroup([
@@ -260,6 +268,7 @@ export const Structures = unitTypeGroup([
   UnitType.MissileSilo,
   UnitType.Port,
   UnitType.Factory,
+  UnitType.RobotFactory,
 ] as const);
 
 // Tank lives in both BuildableAttacks (attack radial menu) and MobileUnits

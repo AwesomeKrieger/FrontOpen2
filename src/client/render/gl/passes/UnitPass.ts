@@ -13,7 +13,7 @@
  *   Ground/sea (boats, trains) → rendered below structures
  *   Missiles (nukes, shells, SAM, MIRV warheads) → rendered above structures
  *
- * Atlas layout (12 columns × 13px cells, pre-built by generate-sprite-atlases.mjs):
+ * Atlas layout (16 columns × 13px cells, pre-built by add-unit-atlas-cols.mjs):
  *   Col 0: Transport (5×5)
  *   Col 1: Trade Ship (5×5)
  *   Col 2: Warship (11×11)
@@ -28,9 +28,12 @@
  *   Col 11: Train Carriage Loaded (5×5)
  *   Col 12: Tank (11×11)
  *   Col 13: Plane (9×9)
+ *   Col 14: Drone (11×11 quadcopter)
+ *   Col 15: Robot Factory mini (structure cell maps here too; map rendering
+ *           goes through StructurePass)
  *
- * Columns 12+ were appended for the tank/plane feature units (append-only
- * wire order — RendererConfig.unitTypes and this list must stay in sync).
+ * Columns 12+ were appended for the feature units (append-only wire order —
+ * RendererConfig.unitTypes and this list must stay in sync).
  *
  * Data flow:
  *   FrameSnapshot.units → filter by typeToAtlasIdx → instance VBO → GPU
@@ -44,10 +47,12 @@ import {
   SMOOTHED_NUKE_TYPES,
   TrainType,
   UT_ATOM_BOMB,
+  UT_DRONE,
   UT_HYDROGEN_BOMB,
   UT_MIRV,
   UT_MIRV_WARHEAD,
   UT_PLANE,
+  UT_ROBOT_FACTORY,
   UT_SAM_MISSILE,
   UT_SHELL,
   UT_TANK,
@@ -94,6 +99,8 @@ const UNIT_ORDER = [
   "TrainCarriageLoaded",
   UT_TANK,
   UT_PLANE,
+  UT_DRONE,
+  UT_ROBOT_FACTORY,
 ] as const;
 
 const ATLAS_COLS = UNIT_ORDER.length;

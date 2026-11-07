@@ -168,6 +168,7 @@ export function playerStateFromUpdate(pu: PlayerUpdate): PlayerState {
     piracyGold: Number(pu.piracyGold ?? 0n),
     goldEarned: Number(pu.goldEarned ?? 0n),
     troops: pu.troops!,
+    robots: pu.robots ?? 0,
     researchPoints: pu.researchPoints ?? 0,
     researchedTechs: pu.researchedTechs ?? 0,
     isTraitor: pu.isTraitor!,

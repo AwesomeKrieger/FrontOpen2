@@ -221,23 +221,29 @@ export class Config {
       case UnitType.Port:
         info = {
           constructionDuration: this.instantBuild() ? 0 : 5 * 10,
+          maxHealth: 3000,
           upgradable: true,
         };
         break;
       case UnitType.MissileSilo:
         info = {
           constructionDuration: this.instantBuild() ? 0 : 10 * 10,
+          maxHealth: 3000,
           upgradable: true,
         };
         break;
       case UnitType.DefensePost:
-        info = { constructionDuration: this.instantBuild() ? 0 : 5 * 10 };
+        info = {
+          constructionDuration: this.instantBuild() ? 0 : 5 * 10,
+          maxHealth: 3000,
+        };
         break;
       case UnitType.SAMLauncher:
         info = {
           constructionDuration: this.instantBuild()
             ? 0
             : SAM_CONSTRUCTION_TICKS,
+          maxHealth: 2000,
           upgradable: true,
         };
         break;
@@ -245,6 +251,7 @@ export class Config {
       case UnitType.Factory:
         info = {
           constructionDuration: this.instantBuild() ? 0 : 2 * 10,
+          maxHealth: 5000,
           upgradable: true,
         };
         break;
@@ -253,6 +260,16 @@ export class Config {
         break;
       case UnitType.Plane:
         info = { maxHealth: 900 };
+        break;
+      case UnitType.Drone:
+        info = { maxHealth: 500 };
+        break;
+      case UnitType.RobotFactory:
+        info = {
+          constructionDuration: this.instantBuild() ? 0 : 60 * 10,
+          maxHealth: 4000,
+          upgradable: true,
+        };
         break;
       case UnitType.TransportShip:
       case UnitType.SAMMissile:
@@ -319,9 +336,69 @@ export class Config {
     return 6;
   }
 
-  /** Troops a tank destroys per tick against a hostile player's territory. */
-  tankDamage(): number {
-    return 400;
+  /** Troops a tank destroys per tick against a hostile player's territory.
+   *  Siege Artillery tech makes the gun +50% stronger. */
+  tankDamage(player: PlayerLike): number {
+    return player.hasTech(TechId.SiegeArtillery) ? 600 : 400;
+  }
+
+  /** Damage a drone's strike run deals. Drones unlock behind Precision
+   *  Bombing + Heavy Airframes, so their bonus techs are already priced in. */
+  droneDamage(): number {
+    return 4000;
+  }
+
+  /** Radius (in tiles) of a drone's strike run. */
+  droneBombRadius(): number {
+    return 3;
+  }
+
+  /** Tiles per tick a drone travels. */
+  droneSpeed(): number {
+    return 8;
+  }
+
+  /** Ticks between a drone's strikes at hostile units in range. */
+  droneStrikeCooldown(): number {
+    return 10;
+  }
+
+  /** Share of attack troop losses the robot fleet absorbs (0..1). While the
+   *  player has robots in stock, that share of the dead is synthesized anew
+   *  instead of dying - but robot-guided attacks hit softer. */
+  robotAssistShare(player: PlayerLike): number {
+    return player.hasTech(TechId.Robotics) ? 0.4 : 0;
+  }
+
+  /** Attacks assisted by robots deal this fraction of their normal damage
+   *  (the robots are tireless but tactically "dumb"). */
+  robotDamageFactor(): number {
+    return 0.8;
+  }
+
+  /** Robot troops a robot factory accrues per second (10 ticks). */
+  robotsPerFactoryInterval(): number {
+    return 40;
+  }
+
+  /** Max robots a player can hold in stock. */
+  robotStockCap(): number {
+    return 5000;
+  }
+
+  /** Ticks between stock additions of a robot factory. */
+  robotsInterval(): number {
+    return 10;
+  }
+
+  /** Attrition (health) a tank loses per tick standing on hostile territory. */
+  tankTerritoryAttrition(): number {
+    return 15;
+  }
+
+  /** Attrition (health) an air unit loses per tick over hostile territory. */
+  planeTerritoryAttrition(): number {
+    return 10;
   }
 
   /** Ticks between a tank's shell shots at hostile units in range. */
@@ -334,9 +411,15 @@ export class Config {
     return 5;
   }
 
-  /** Troops a plane's bombing run destroys. */
+  /** Troops a plane's bombing run destroys. Precision Bombing is applied
+   *  separately via planeDamageMultiplier() at the call sites. */
   planeDamage(): number {
     return 2500;
+  }
+
+  /** Elite airframes (Heavy Airframes): planes +50% maximum health. */
+  planeHealthMultiplier(player: PlayerLike): number {
+    return player.hasTech(TechId.HeavyAirframes) ? 1.5 : 1;
   }
 
   private hasInfiniteTroopsFor(player: PlayerLike): boolean {

@@ -38,6 +38,10 @@ export const TRIBE_RESEARCH_PLANS: readonly (readonly TechId[])[] = [
     TechId.ReinforcedArmor,
     TechId.Aviation,
     TechId.PrecisionBombing,
+    TechId.SiegeArtillery,
+    TechId.HeavyAirframes,
+    TechId.DroneWarfare,
+    TechId.Robotics,
   ],
   // Armor rush, with the growth tech before the air branch.
   [
@@ -49,6 +53,10 @@ export const TRIBE_RESEARCH_PLANS: readonly (readonly TechId[])[] = [
     TechId.Trade,
     TechId.Aviation,
     TechId.PrecisionBombing,
+    TechId.SiegeArtillery,
+    TechId.Robotics,
+    TechId.HeavyAirframes,
+    TechId.DroneWarfare,
   ],
   // Air rush.
   [
@@ -60,6 +68,10 @@ export const TRIBE_RESEARCH_PLANS: readonly (readonly TechId[])[] = [
     TechId.Mobilization,
     TechId.Armor,
     TechId.ReinforcedArmor,
+    TechId.HeavyAirframes,
+    TechId.DroneWarfare,
+    TechId.SiegeArtillery,
+    TechId.Robotics,
   ],
   // Trade boom.
   [
@@ -71,6 +83,10 @@ export const TRIBE_RESEARCH_PLANS: readonly (readonly TechId[])[] = [
     TechId.PrecisionBombing,
     TechId.Armor,
     TechId.ReinforcedArmor,
+    TechId.Robotics,
+    TechId.SiegeArtillery,
+    TechId.HeavyAirframes,
+    TechId.DroneWarfare,
   ],
   // Balanced: alternate between economy and both unit branches.
   [
@@ -82,6 +98,10 @@ export const TRIBE_RESEARCH_PLANS: readonly (readonly TechId[])[] = [
     TechId.Mobilization,
     TechId.ReinforcedArmor,
     TechId.PrecisionBombing,
+    TechId.SiegeArtillery,
+    TechId.HeavyAirframes,
+    TechId.DroneWarfare,
+    TechId.Robotics,
   ],
 ];
 

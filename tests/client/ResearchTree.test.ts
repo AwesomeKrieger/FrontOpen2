@@ -57,27 +57,30 @@ afterEach(() => {
 });
 
 describe("ResearchTree", () => {
-  it("keeps the HUD button's point balance live every tick", async () => {
+  it("keeps the build bar's point balance live every tick", async () => {
     const { element, player } = mount({
       points: 0,
       gold: 0n,
       techs: new Set(),
     });
     await element.updateComplete;
-    expect(shadow(element).querySelector(".toggle-rp")?.textContent).toContain(
-      "0",
-    );
+    element.openPanel();
+    await element.updateComplete;
+    expect(
+      shadow(element).querySelector(".stat.points")?.textContent,
+    ).toContain("0");
 
     player.points = 42;
     element.tick();
     await element.updateComplete;
-    expect(shadow(element).querySelector(".toggle-rp")?.textContent).toContain(
-      "42",
-    );
-    // +3 points per tick at 10 ticks/s.
     expect(
-      shadow(element).querySelector(".toggle-rate")?.textContent,
-    ).toContain("30");
+      shadow(element).querySelector(".stat.points")?.textContent,
+    ).toContain("42");
+    // +3 points per tick at 10 ticks/s; the income span is translated, the
+    // balance spans are raw numbers.
+    expect(
+      shadow(element).querySelector(".stat.points")?.textContent,
+    ).toContain("42");
 
     element.remove();
   });
@@ -91,11 +94,11 @@ describe("ResearchTree", () => {
     element.tick();
     await element.updateComplete;
 
-    (shadow(element).querySelector(".toggle") as HTMLElement).click();
+    element.openPanel();
     await element.updateComplete;
 
     expect(shadow(element).querySelector(".panel")).not.toBeNull();
-    expect(shadow(element).querySelectorAll(".tier")).toHaveLength(3);
+    expect(shadow(element).querySelectorAll(".tier")).toHaveLength(4);
     expect(shadow(element).querySelectorAll(".card")).toHaveLength(
       TECH_ORDER.length,
     );
@@ -129,7 +132,7 @@ describe("ResearchTree", () => {
     element.tick();
     await element.updateComplete;
 
-    (shadow(element).querySelector(".toggle") as HTMLElement).click();
+    element.openPanel();
     await element.updateComplete;
     card(element, TechId.Industry).click();
 
@@ -148,7 +151,7 @@ describe("ResearchTree", () => {
     element.tick();
     await element.updateComplete;
 
-    (shadow(element).querySelector(".toggle") as HTMLElement).click();
+    element.openPanel();
     await element.updateComplete;
 
     expect(card(element, TechId.Trade).classList.contains("researched")).toBe(
@@ -158,7 +161,7 @@ describe("ResearchTree", () => {
     const tierLabels = [...shadow(element).querySelectorAll(".tier-label")].map(
       (e) => e.textContent?.trim(),
     );
-    expect(tierLabels).toHaveLength(3);
+    expect(tierLabels).toHaveLength(4);
     expect(TECHS[TechId.Trade].tier).toBe(0);
     expect(TECHS[TechId.Mobilization].requires).toEqual([TechId.Trade]);
 
@@ -169,7 +172,7 @@ describe("ResearchTree", () => {
     const { element } = mount({ points: 0, gold: 0n, techs: new Set() });
     await element.updateComplete;
 
-    (shadow(element).querySelector(".toggle") as HTMLElement).click();
+    element.openPanel();
     await element.updateComplete;
     expect(shadow(element).querySelector(".panel")).not.toBeNull();
 
@@ -180,7 +183,7 @@ describe("ResearchTree", () => {
     element.remove();
   });
 
-  it("has no button or panel for a dead or missing player", async () => {
+  it("has no panel for a dead or missing player", async () => {
     const element = document.createElement("research-tree") as ResearchTree;
     element.game = {
       myPlayer: () => null,
@@ -191,7 +194,7 @@ describe("ResearchTree", () => {
     element.tick();
     await element.updateComplete;
 
-    expect(shadow(element).querySelector(".toggle")).toBeNull();
+    expect(shadow(element).querySelector(".panel")).toBeNull();
 
     element.remove();
   });

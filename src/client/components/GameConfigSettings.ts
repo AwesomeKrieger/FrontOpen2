@@ -121,6 +121,8 @@ const unitOptions: { type: UnitType; translationKey: string }[] = [
   { type: UnitType.Factory, translationKey: "unit_type.factory" },
   { type: UnitType.Tank, translationKey: "unit_type.tank" },
   { type: UnitType.Plane, translationKey: "unit_type.plane" },
+  { type: UnitType.Drone, translationKey: "unit_type.drone" },
+  { type: UnitType.RobotFactory, translationKey: "unit_type.robot_factory" },
 ];
 
 const MAP_ICON = svg`<path

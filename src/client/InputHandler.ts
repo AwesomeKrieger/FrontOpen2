@@ -142,6 +142,11 @@ export function highlightTypesForUnit(
       return [UnitType.Port];
     case UnitType.MIRV:
       return [UnitType.MissileSilo];
+    case UnitType.Tank:
+    case UnitType.Drone:
+      return [UnitType.Factory];
+    case UnitType.Plane:
+      return [UnitType.City];
     default:
       return [unitType];
   }

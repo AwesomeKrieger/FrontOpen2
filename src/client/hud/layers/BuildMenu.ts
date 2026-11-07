@@ -29,6 +29,8 @@ import { GameView } from "../../view";
 const warshipIcon = assetUrl("images/BattleshipIconWhite.svg");
 const tankIcon = assetUrl("images/TankIconWhite.svg");
 const planeIcon = assetUrl("images/PlaneIconWhite.svg");
+const droneIcon = assetUrl("images/DroneIconWhite.svg");
+const robotFactoryIcon = assetUrl("images/RobotFactoryIconWhite.svg");
 const cityIcon = assetUrl("images/CityIconWhite.svg");
 const factoryIcon = assetUrl("images/FactoryIconWhite.svg");
 const goldCoinIcon = assetUrl("images/GoldCoinIcon.svg");
@@ -93,6 +95,13 @@ const buildTable: BuildItemDisplay[][] = [
       countable: true,
     },
     {
+      unitType: UnitType.Drone,
+      icon: droneIcon,
+      description: "build_menu.desc.drone",
+      key: "unit_type.drone",
+      countable: true,
+    },
+    {
       unitType: UnitType.Port,
       icon: portIcon,
       description: "build_menu.desc.port",
@@ -132,6 +141,13 @@ const buildTable: BuildItemDisplay[][] = [
       icon: factoryIcon,
       description: "build_menu.desc.factory",
       key: "unit_type.factory",
+      countable: true,
+    },
+    {
+      unitType: UnitType.RobotFactory,
+      icon: robotFactoryIcon,
+      description: "build_menu.desc.robot_factory",
+      key: "unit_type.robot_factory",
       countable: true,
     },
   ],

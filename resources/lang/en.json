@@ -195,12 +195,14 @@
       "atom_bomb": "Small explosion",
       "city": "Increases max population",
       "defense_post": "Increases defenses of nearby borders",
+      "drone": "Heavy strike aircraft, bombs a target area, unlocked late",
       "factory": "Creates railroads and spawns trains",
       "hydrogen_bomb": "Large explosion",
       "mirv": "Huge explosion, only targets selected player",
       "missile_silo": "Used to launch nukes",
       "plane": "Flies to a target and bombs enemy troops and units",
       "port": "Sends trade ships to generate gold",
+      "robot_factory": "Builds robots that replace fallen troops — expensive, and attacks with robots are weaker",
       "sam_launcher": "Defends against incoming nukes",
       "tank": "Rolls over land, destroys enemy troops nearby",
       "warship": "Captures trade ships, destroys ships and boats"
@@ -2256,6 +2258,14 @@
         "desc": "Unlocks Planes",
         "name": "Aviation"
       },
+      "DroneWarfare": {
+        "desc": "Unlocks Drones, heavy late-game strike aircraft",
+        "name": "Drone Warfare"
+      },
+      "HeavyAirframes": {
+        "desc": "Planes +50% health",
+        "name": "Heavy Airframes"
+      },
       "Industry": {
         "desc": "+15% gold income",
         "name": "Industry"
@@ -2275,6 +2285,14 @@
       "ReinforcedArmor": {
         "desc": "Tanks +30% health",
         "name": "Reinforced Armor"
+      },
+      "Robotics": {
+        "desc": "Unlocks the Robot Factory — robots replace fallen troops, but attack weaker",
+        "name": "Robotics"
+      },
+      "SiegeArtillery": {
+        "desc": "Tanks +50% damage",
+        "name": "Siege Artillery"
       },
       "Trade": {
         "desc": "+25% trade ship gold",
@@ -2711,12 +2729,15 @@
     "boat": "Boat",
     "city": "City",
     "defense_post": "Defense Post",
+    "drone": "Drone",
     "factory": "Factory",
     "hydrogen_bomb": "Hydrogen Bomb",
     "mirv": "MIRV",
     "missile_silo": "Missile Silo",
     "plane": "Plane",
     "port": "Port",
+    "robot_factory": "Robot Factory",
+    "robots": "Robots",
     "sam_launcher": "SAM Launcher",
     "tank": "Tank",
     "warship": "Warship"

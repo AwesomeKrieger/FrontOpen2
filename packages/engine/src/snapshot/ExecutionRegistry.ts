@@ -12,6 +12,7 @@ import { DeleteUnitExecutionSnapshot } from "../execution/DeleteUnitExecution";
 import { DonateGoldExecutionSnapshot } from "../execution/DonateGoldExecution";
 import { DonateTroopsExecutionSnapshot } from "../execution/DonateTroopExecution";
 import { DoomsdayClockExecutionSnapshot } from "../execution/DoomsdayClockExecution";
+import { DroneExecutionSnapshot } from "../execution/DroneExecution";
 import { EmbargoAllExecutionSnapshot } from "../execution/EmbargoAllExecution";
 import { EmbargoExecutionSnapshot } from "../execution/EmbargoExecution";
 import { EmojiExecutionSnapshot } from "../execution/EmojiExecution";
@@ -31,6 +32,7 @@ import { QuickChatExecutionSnapshot } from "../execution/QuickChatExecution";
 import { RecomputeRailClusterExecutionSnapshot } from "../execution/RecomputeRailClusterExecution";
 import { ResearchExecutionSnapshot } from "../execution/ResearchExecution";
 import { RetreatExecutionSnapshot } from "../execution/RetreatExecution";
+import { RobotFactoryExecutionSnapshot } from "../execution/RobotFactoryExecution";
 import { SAMLauncherExecutionSnapshot } from "../execution/SAMLauncherExecution";
 import { SAMMissileExecutionSnapshot } from "../execution/SAMMissileExecution";
 import { ShellExecutionSnapshot } from "../execution/ShellExecution";
@@ -70,6 +72,7 @@ export const EXECUTION_SNAPSHOT_TYPES = [
   DonateGoldExecutionSnapshot,
   DonateTroopsExecutionSnapshot,
   DoomsdayClockExecutionSnapshot,
+  DroneExecutionSnapshot,
   EmbargoAllExecutionSnapshot,
   EmbargoExecutionSnapshot,
   EmojiExecutionSnapshot,
@@ -89,6 +92,7 @@ export const EXECUTION_SNAPSHOT_TYPES = [
   RecomputeRailClusterExecutionSnapshot,
   ResearchExecutionSnapshot,
   RetreatExecutionSnapshot,
+  RobotFactoryExecutionSnapshot,
   SAMLauncherExecutionSnapshot,
   SAMMissileExecutionSnapshot,
   ShellExecutionSnapshot,

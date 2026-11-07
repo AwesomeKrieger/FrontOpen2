@@ -485,6 +485,10 @@ export class PlayerView implements PlayerLike {
     return this.state.researchPoints;
   }
 
+  robots(): number {
+    return this.state.robots;
+  }
+
   researchedTechs(): number {
     return this.state.researchedTechs;
   }

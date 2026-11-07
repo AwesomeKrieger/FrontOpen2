@@ -125,6 +125,20 @@ export class PlaneExecution implements Execution {
       }
     }
 
+    // Attrition: hostile territory is dangerous even without SAMs.
+    const overOwner = this.mg.owner(this.plane.tile());
+    if (
+      overOwner.isPlayer() &&
+      overOwner !== this.player &&
+      !this.player.isFriendly(overOwner as Player)
+    ) {
+      this.plane.modifyHealth(-this.mg.config().planeTerritoryAttrition());
+      if (!this.plane.isActive()) {
+        this.active = false;
+        return;
+      }
+    }
+
     const arrived = this.moveTowardsTarget();
     if (arrived) {
       this.bomb();
@@ -192,6 +206,9 @@ export class PlaneExecution implements Execution {
     );
     const tile = this.plane.tile();
 
+    // Scorched earth: the blast carves gray fallout scars into hostile land.
+    this.scorchTiles(tile, range, 4);
+
     // Troops of hostile players whose territory is under the blast.
     const hitPlayers = new Set<Player>();
     for (const t of this.mg.circleSearch(tile, range)) {
@@ -213,13 +230,62 @@ export class PlaneExecution implements Execution {
     const targets = this.mg.nearbyUnits(
       tile,
       range,
-      [UnitType.Tank, UnitType.Plane, UnitType.Warship],
+      [UnitType.Tank, UnitType.Plane, UnitType.Drone, UnitType.Warship],
       ({ unit }) => this.isHostileUnit(unit as Unit),
     );
     for (const { unit } of targets) {
-      if (unit.hasHealth()) {
-        unit.modifyHealth(-damage, this.player);
+      unit.modifyHealth(-damage, this.player);
+    }
+
+    // Structures in the blast burn too.
+    const structures = this.mg.nearbyUnits(
+      tile,
+      range,
+      [
+        UnitType.City,
+        UnitType.Factory,
+        UnitType.Port,
+        UnitType.DefensePost,
+        UnitType.SAMLauncher,
+        UnitType.MissileSilo,
+        UnitType.RobotFactory,
+      ],
+      ({ unit }) => this.isHostileUnit(unit as Unit),
+    );
+    for (const { unit: structure } of structures) {
+      structure.modifyHealth(-damage, this.player);
+    }
+  }
+
+  /**
+   * Carve gray fallout scars into hostile territory: relinquish the tiles
+   * (fallout throws on owned tiles) and mark them, up to `maxTiles` of them.
+   */
+  private scorchTiles(center: TileRef, range: number, maxTiles: number): void {
+    const tiles: TileRef[] = [];
+    for (const t of this.mg.circleSearch(center, range)) {
+      if (!this.mg.isLand(t) || this.mg.hasFallout(t) || !this.mg.hasOwner(t)) {
+        continue;
       }
+      const owner = this.mg.owner(t);
+      if (owner.isPlayer() && this.player.isFriendly(owner as Player)) {
+        continue;
+      }
+      tiles.push(t);
+    }
+    if (tiles.length === 0 || maxTiles <= 0) {
+      return;
+    }
+    // Deterministic spread: every N-th eligible tile, so replays and snapshots
+    // stay stable while the scars land across the whole radius.
+    const step = Math.ceil(tiles.length / maxTiles);
+    for (let i = 0; i < tiles.length && maxTiles > 0; i++) {
+      if (i % step !== 0) {
+        continue;
+      }
+      this.mg.relinquish(tiles[i]);
+      this.mg.setFallout(tiles[i], true);
+      maxTiles--;
     }
   }
 

@@ -61,6 +61,7 @@ export function diffPlayerUpdate(
     prev.isDecaying === next.isDecaying &&
     prev.hasSpawned === next.hasSpawned &&
     prev.researchedTechs === next.researchedTechs &&
+    prev.robots === next.robots &&
     prev.spawnTile === next.spawnTile &&
     prev.betrayals === next.betrayals &&
     prev.lastDeleteUnitTick === next.lastDeleteUnitTick &&
@@ -128,6 +129,7 @@ export function diffPlayerUpdate(
     "researchedTechs",
     prev.researchedTechs === next.researchedTechs,
   );
+  setIfDifferent("robots", prev.robots === next.robots);
   setIfDifferent("hasSpawned", prev.hasSpawned === next.hasSpawned);
   setIfDifferent("spawnTile", prev.spawnTile === next.spawnTile);
   setIfDifferent("betrayals", prev.betrayals === next.betrayals);

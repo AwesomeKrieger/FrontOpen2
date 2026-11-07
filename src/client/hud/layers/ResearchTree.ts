@@ -15,7 +15,13 @@ import { ResearchTechIntentEvent } from "../../Transport";
 import { translateText } from "../../Utils";
 import { GameView } from "../../view";
 import type { PlayerView } from "../../view/PlayerView";
-import { goldCoinIcon, planeIcon, tankIcon } from "../HotbarIcons";
+import {
+  droneIcon,
+  goldCoinIcon,
+  planeIcon,
+  robotFactoryIcon,
+  tankIcon,
+} from "../HotbarIcons";
 
 /** The simulation runs at 10 ticks per second; rates are shown per second. */
 const TICKS_PER_SECOND = 10;
@@ -40,10 +46,11 @@ interface TechCard {
  * The tech tree: a HUD panel listing the research nodes by tier. Research
  * points accrue from cities and factories; each tech costs points plus gold.
  *
- * The button stays in the HUD the whole match and shows the live balance, so
- * a player always sees what they are saving towards. The panel itself follows
- * the build menu's look: a centered dark modal with one row of cards per tier.
- * Open/close with the button, the close button or Escape.
+ * The button that opens the panel lives in the build bar (UnitDisplay), right
+ * next to the build buttons at the bottom of the HUD, and shows the live
+ * balance there. The panel itself follows the build menu's look: a centered
+ * dark modal with one row of cards per tier. Close with the backdrop, the
+ * close button, any other view or Escape.
  */
 @customElement("research-tree")
 export class ResearchTree extends LitElement implements Controller {
@@ -55,7 +62,6 @@ export class ResearchTree extends LitElement implements Controller {
   @state() private points = 0;
   @state() private incomePerSecond = 0;
   @state() private researchedCount = 0;
-  @state() private availableCount = 0;
 
   private escapeHandler = (e: KeyboardEvent) => {
     if (e.key !== "Escape" || !this.open) {
@@ -84,10 +90,9 @@ export class ResearchTree extends LitElement implements Controller {
   }
 
   /**
-   * Runs every tick (10Hz). The point balance and the availability badge are
-   * refreshed unconditionally so the HUD button never shows a stale value;
-   * the card list is only rebuilt while the panel is open (or before its
-   * first render).
+   * Runs every tick (10Hz). The point balance is refreshed unconditionally so
+   * the build bar's research button never shows a stale value; the card list
+   * is only rebuilt while the panel is open (or before its first render).
    */
   tick() {
     const player = this.game?.myPlayer();
@@ -95,7 +100,6 @@ export class ResearchTree extends LitElement implements Controller {
       this.points = 0;
       this.incomePerSecond = 0;
       this.researchedCount = 0;
-      this.availableCount = 0;
       return;
     }
     this.points = player.researchPoints();
@@ -103,9 +107,6 @@ export class ResearchTree extends LitElement implements Controller {
       this.game.config().researchPointsPerTick(player) * TICKS_PER_SECOND,
     );
     this.researchedCount = TECH_ORDER.filter((id) => player.hasTech(id)).length;
-    this.availableCount = TECH_ORDER.filter((id) =>
-      this.canResearch(player, id),
-    ).length;
 
     if (this.open || this.cards.length === 0) {
       this.refreshCards(player);
@@ -154,6 +155,16 @@ export class ResearchTree extends LitElement implements Controller {
     this.eventBus.emit(new ResearchTechIntentEvent(id));
   }
 
+  /** Opened from the build bar's research button (UnitDisplay). */
+  public togglePanel() {
+    this.setOpen(!this.open);
+  }
+
+  /** The build bar button opens the panel; other input or the panel itself closes it. */
+  public openPanel() {
+    this.setOpen(true);
+  }
+
   private setOpen(open: boolean) {
     if (this.open === open) {
       return;
@@ -163,10 +174,6 @@ export class ResearchTree extends LitElement implements Controller {
     if (open && player) {
       this.refreshCards(player);
     }
-  }
-
-  private toggle() {
-    this.setOpen(!this.open);
   }
 
   static styles = css`
@@ -184,77 +191,6 @@ export class ResearchTree extends LitElement implements Controller {
       z-index: 1;
       pointer-events: auto;
       background: rgba(0, 0, 0, 0.25);
-    }
-    .toggle {
-      position: fixed;
-      left: 0.75rem;
-      bottom: 9.5rem;
-      z-index: 2;
-      pointer-events: auto;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.3rem 0.6rem;
-      border-radius: 0.375rem;
-      border: 1px solid #64748b;
-      background: rgba(31, 41, 55, 0.92);
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-    }
-    .toggle:hover {
-      background: rgba(55, 65, 81, 0.95);
-      border-color: #94a3b8;
-    }
-    .toggle .toggle-icon {
-      font-size: 1rem;
-      line-height: 1;
-    }
-    .toggle .toggle-rp {
-      color: #a5b4fc;
-      font-variant-numeric: tabular-nums;
-    }
-    .toggle .toggle-rate {
-      color: #4ade80;
-      font-variant-numeric: tabular-nums;
-      font-size: 0.68rem;
-      opacity: 0.9;
-    }
-    .toggle.attention {
-      border-color: #4ade80;
-      box-shadow: 0 0 8px rgba(74, 222, 128, 0.55);
-    }
-    .toggle.attention .toggle-icon {
-      animation: research-pulse 1.6s ease-in-out infinite;
-    }
-    @keyframes research-pulse {
-      0%,
-      100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0.55;
-      }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .toggle.attention .toggle-icon {
-        animation: none;
-      }
-    }
-    @media (max-width: 480px) {
-      .toggle {
-        bottom: 8.5rem;
-        padding: 0.25rem 0.45rem;
-        font-size: 0.68rem;
-        gap: 0.25rem;
-      }
-      .toggle .toggle-label,
-      .toggle .toggle-rate {
-        display: none;
-      }
     }
     .panel {
       position: fixed;
@@ -509,25 +445,9 @@ export class ResearchTree extends LitElement implements Controller {
       this.refreshCards(player);
     }
 
-    return html`
-      <button
-        class="toggle ${this.availableCount > 0 ? "attention" : ""}"
-        @click=${() => this.toggle()}
-        title=${translateText("research.button")}
-      >
-        <span class="toggle-icon">🔬</span>
-        <span class="toggle-label">${translateText("research.button")}</span>
-        <span class="toggle-rp"
-          >${renderNumber(this.points)}
-          ${translateText("research.points_short")}</span
-        >
-        <span class="toggle-rate"
-          >+${renderNumber(this.incomePerSecond)}/s</span
-        >
-      </button>
-
-      ${this.open ? this.renderPanel() : nothing}
-    `;
+    // The toggle lives in the build bar (UnitDisplay); this element only
+    // renders the panel itself.
+    return html` ${this.open ? this.renderPanel() : nothing} `;
   }
 
   private renderPanel() {
@@ -664,6 +584,10 @@ export class ResearchTree extends LitElement implements Controller {
         return { icon: tankIcon, key: "unit_type.tank" };
       case UnitType.Plane:
         return { icon: planeIcon, key: "unit_type.plane" };
+      case UnitType.Drone:
+        return { icon: droneIcon, key: "unit_type.drone" };
+      case UnitType.RobotFactory:
+        return { icon: robotFactoryIcon, key: "unit_type.robot_factory" };
       default:
         return null;
     }
@@ -687,6 +611,14 @@ export class ResearchTree extends LitElement implements Controller {
         return "🔰";
       case TechId.PrecisionBombing:
         return "🎯";
+      case TechId.SiegeArtillery:
+        return "💥";
+      case TechId.HeavyAirframes:
+        return "🛩️";
+      case TechId.DroneWarfare:
+        return "🛸";
+      case TechId.Robotics:
+        return "🤖";
       default:
         return "🔬";
     }

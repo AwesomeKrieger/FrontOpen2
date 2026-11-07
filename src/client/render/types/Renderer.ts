@@ -75,6 +75,8 @@ export interface PlayerState {
   /** Cumulative gold received from all sources (live). */
   goldEarned: number;
   troops: number;
+  /** Robot stock from robot factories. */
+  robots: number;
   /** Accumulated research points (spent on techs). */
   researchPoints: number;
   /** Researched techs as a bitmask indexed by TECH_ORDER. */

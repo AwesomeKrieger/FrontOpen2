@@ -15,6 +15,7 @@ const transportShipSprite = assetUrl("sprites/transportship.png");
 const warshipSprite = assetUrl("sprites/warship.png");
 const tankSprite = assetUrl("sprites/tank.svg");
 const planeSprite = assetUrl("sprites/plane.svg");
+const droneSprite = assetUrl("sprites/drone.svg");
 
 // Can't reuse TrainType because "loaded" is not a type, just an attribute
 const TrainTypeSprite = {
@@ -35,6 +36,7 @@ const SPRITE_CONFIG: Partial<Record<UnitType | TrainTypeSprite, string>> = {
   [UnitType.MIRV]: mirvSprite,
   [UnitType.Tank]: tankSprite,
   [UnitType.Plane]: planeSprite,
+  [UnitType.Drone]: droneSprite,
   [TrainTypeSprite.Engine]: trainEngineSprite,
   [TrainTypeSprite.Carriage]: trainCarriageSprite,
   [TrainTypeSprite.LoadedCarriage]: trainLoadedCarriageSprite,

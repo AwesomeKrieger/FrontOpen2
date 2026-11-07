@@ -23,8 +23,11 @@ function makeDisplay(
     gold: () => 1000n,
     isAlive: () => true,
     hasTech: () => true,
+    researchPoints: () => 0,
+    robots: () => 0,
     units: (unitType: UnitType) =>
       hasMissileSilo && unitType === UnitType.MissileSilo ? [{}] : [],
+    totalUnitLevels: () => 0,
   };
   const eventBus = new EventBus();
   const display = document.createElement("unit-display") as UnitDisplay;
@@ -107,9 +110,10 @@ describe("mobile UnitDisplay layout", () => {
       expect(grid?.classList.contains("max-[360px]:auto-cols-[44px]")).toBe(
         true,
       );
-      expect(grid?.children).toHaveLength(BuildMenus.types.length);
+      // One extra child: the research button at the end of the bar.
+      expect(grid?.children).toHaveLength(BuildMenus.types.length + 1);
       expect(grid?.style.getPropertyValue("--unit-display-columns")).toBe(
-        String(BuildMenus.types.length),
+        String(BuildMenus.types.length + 1),
       );
     } finally {
       display.remove();
@@ -122,9 +126,10 @@ describe("mobile UnitDisplay layout", () => {
       await display.updateComplete;
 
       const grid = display.querySelector<HTMLElement>(".unit-display-grid");
-      expect(grid?.children).toHaveLength(BuildMenus.types.length - 1);
+      // One disabled unit fewer, plus the research button at the end.
+      expect(grid?.children).toHaveLength(BuildMenus.types.length);
       expect(grid?.style.getPropertyValue("--unit-display-columns")).toBe(
-        String(BuildMenus.types.length - 1),
+        String(BuildMenus.types.length),
       );
       expect(grid?.classList.contains("lg:grid-cols-none")).toBe(true);
       expect(grid?.classList.contains("lg:auto-cols-max")).toBe(true);
@@ -140,8 +145,9 @@ describe("mobile UnitDisplay layout", () => {
 
       const grid = display.querySelector<HTMLElement>(".unit-display-grid");
       expect(display.classList.contains("hidden")).toBe(false);
-      expect(grid?.children).toHaveLength(1);
-      expect(grid?.style.getPropertyValue("--unit-display-columns")).toBe("1");
+      // The atom button plus the research button at the end of the bar.
+      expect(grid?.children).toHaveLength(2);
+      expect(grid?.style.getPropertyValue("--unit-display-columns")).toBe("2");
     } finally {
       display.remove();
     }

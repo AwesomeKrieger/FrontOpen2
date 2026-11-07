@@ -270,6 +270,8 @@ export interface PlayerUpdate {
   /** Cumulative gold received from all sources (workers, trade, ...). */
   goldEarned?: Gold;
   troops?: number;
+  /** Robot stock from robot factories; absorbs a share of attack casualties. */
+  robots?: number;
   /** Accumulated research points, spent on techs. */
   researchPoints?: number;
   /** Researched techs as a bitmask indexed by `TECH_ORDER` (see TechTree). */

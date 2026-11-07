@@ -119,6 +119,12 @@ export interface UnitParamsMap {
   [UnitType.Plane]: {
     targetTile?: TileRef;
   };
+
+  [UnitType.Drone]: {
+    targetTile?: TileRef;
+  };
+
+  [UnitType.RobotFactory]: Record<string, never>;
 }
 
 // Type helper to get params type for a specific unit type
@@ -390,6 +396,12 @@ export interface Player extends PlayerLike {
   setTroops(troops: number): void;
   addTroops(troops: number): void;
   removeTroops(troops: number): number;
+  /** Robots currently in stock (troops the factories synthesized). */
+  robots(): number;
+  /** Add robots to stock, capped at the configured stock cap. */
+  addRobots(count: number): void;
+  /** Take up to `count` robots out of stock; returns how many were taken. */
+  useRobots(count: number): number;
 
   // Research (tech tree). Research points accrue from cities and factories;
   // techs are unlocked with points plus gold.
@@ -653,6 +665,9 @@ export interface Game extends GameLike {
   nations(): Nation[];
 
   numTilesWithFallout(): number;
+  /** Clears ownership of an owned land tile (throwing when unowned); the
+   *  intended prep for setFallout, which rejects owned tiles. */
+  relinquish(tile: TileRef): void;
   stats(): Stats;
 
   addUpdate(update: GameUpdate): void;

@@ -59,6 +59,7 @@ import {
   simpleHash,
   toInt,
   within,
+  withinInt,
 } from "@openfront/engine-lib/Util";
 import { z } from "zod";
 import {
@@ -146,6 +147,13 @@ export class PlayerImpl implements Player {
 
   private _gold: bigint;
   private _troops: bigint;
+
+  /**
+   * Robots synthesized by robot factories, held in stock. Attacks spend from
+   * the stock to take fewer human casualties, so the robots don't sit in the
+   * player's troop pool where they would fight for free.
+   */
+  private _robots: bigint = 0n;
 
   /** Accumulated research points, spent on techs. */
   private _researchPoints = 0;
@@ -415,6 +423,7 @@ export class PlayerImpl implements Player {
       piracyGold: this._piracyGold,
       goldEarned: this._goldEarned,
       troops: this.troops(),
+      robots: this.robots(),
       researchPoints: this._researchPoints,
       researchedTechs: this._researchedTechMask,
       allies: allies,
@@ -1408,6 +1417,27 @@ export class PlayerImpl implements Player {
     return Number(toRemove);
   }
 
+  robots(): number {
+    return Number(this._robots);
+  }
+
+  addRobots(count: number): void {
+    if (count <= 0) {
+      return;
+    }
+    const cap = toInt(this.mg.config().robotStockCap());
+    this._robots = withinInt(this._robots + toInt(count), 0n, cap);
+  }
+
+  useRobots(count: number): number {
+    if (count <= 0) {
+      return 0;
+    }
+    const toTake = minInt(this._robots, toInt(count));
+    this._robots -= toTake;
+    return Number(toTake);
+  }
+
   researchPoints(): number {
     return this._researchPoints;
   }
@@ -1709,11 +1739,18 @@ export class PlayerImpl implements Player {
       case UnitType.Tank:
       case UnitType.Plane:
         return this.mg.isValidRef(targetTile) ? targetTile : false;
+      case UnitType.Drone:
+        // Drones launch from the nearest factory like tanks, but fly.
+        return this.hasLiveStructure(UnitType.Factory) &&
+          this.mg.isValidRef(targetTile)
+          ? targetTile
+          : false;
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
+      case UnitType.RobotFactory:
         return this.landBasedStructureSpawn(targetTile, validTiles);
       default:
         assertNever(unitType);
@@ -2060,6 +2097,7 @@ export class PlayerImpl implements Player {
       random: w.random(this._pseudo_random),
       gold: this._gold,
       troops: this._troops,
+      robots: this._robots === 0n ? undefined : Number(this._robots),
       researchPoints: this._researchPoints,
       researchedTechs: this._researchedTechMask,
       tradeGold: this._tradeGold,
@@ -2134,6 +2172,7 @@ export class PlayerImpl implements Player {
     this._pseudo_random = r.random(s.random);
     this._gold = s.gold;
     this._troops = s.troops;
+    this._robots = toInt(s.robots ?? 0);
     this._researchPoints = s.researchPoints ?? 0;
     this._researchedTechMask = s.researchedTechs ?? 0;
     this._tradeGold = s.tradeGold;
@@ -2211,6 +2250,9 @@ export const PlayerSnapshot = snapshotType({
     random: zRandom(),
     gold: z.bigint(),
     troops: z.bigint(),
+    // Optional for replay compatibility: games recorded before the robot
+    // feature have no robots field; restore defaults to an empty stock.
+    robots: zInt().optional(),
     researchPoints: zInt().optional(),
     researchedTechs: zInt().optional(),
     tradeGold: z.bigint(),

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Workshop body with a saw-tooth roof -->
+  <path d="M4 58V26l16-8v8l16-8v8l16-8v32z" fill="#e6e6e6"/>
+  <!-- Chimney -->
+  <rect x="6" y="8" width="6" height="15" rx="1" fill="#ffffff"/>
+  <!-- Gear badge -->
+  <g transform="translate(32 40)" fill="#ffffff">
+    <rect x="-3.5" y="-15" width="7" height="6" rx="1" transform="rotate(0)"/>
+    <rect x="-3.5" y="-15" width="7" height="6" rx="1" transform="rotate(45)"/>
+    <rect x="-3.5" y="-15" width="7" height="6" rx="1" transform="rotate(90)"/>
+    <rect x="-3.5" y="-15" width="7" height="6" rx="1" transform="rotate(135)"/>
+    <rect x="-3.5" y="-15" width="7" height="6" rx="1" transform="rotate(180)"/>
+    <rect x="-3.5" y="-15" width="7" height="6" rx="1" transform="rotate(225)"/>
+    <rect x="-3.5" y="-15" width="7" height="6" rx="1" transform="rotate(270)"/>
+    <rect x="-3.5" y="-15" width="7" height="6" rx="1" transform="rotate(315)"/>
+    <circle r="10"/>
+  </g>
+  <g transform="translate(32 40)">
+    <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" fill="#e6e6e6"/>
+  </g>
+</svg>

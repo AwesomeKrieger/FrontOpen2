@@ -27,6 +27,7 @@ function makePlayerState(overrides: Partial<PlayerState> = {}): PlayerState {
     piracyGold: 0,
     goldEarned: 0,
     troops: 100,
+    robots: 0,
     researchPoints: 0,
     researchedTechs: 0,
     isTraitor: false,
@@ -524,6 +525,8 @@ describe("diffPlayerUpdate — every scalar field must be wired up", () => {
     "gold",
     "troops",
     "goldEarned",
+    // Packed with the same channel as gold/troops (see diffPlayerUpdate docs).
+    "researchPoints",
   ]);
 
   function flip(value: unknown): unknown {

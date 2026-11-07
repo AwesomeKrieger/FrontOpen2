@@ -23,6 +23,11 @@ export enum TechId {
   // TECH_ORDER so the existing tech bits never move.
   Trade = "Trade",
   Mobilization = "Mobilization",
+  // Late-game expansion (tier 4), appended so the tech bitmask is stable.
+  SiegeArtillery = "SiegeArtillery",
+  HeavyAirframes = "HeavyAirframes",
+  DroneWarfare = "DroneWarfare",
+  Robotics = "Robotics",
 }
 
 export interface Tech {
@@ -97,6 +102,38 @@ export const TECHS: Readonly<Record<TechId, Tech>> = {
     researchPoints: 100,
     gold: 200_000n,
   },
+  // Late-game expansion. Very expensive in both research points and gold so
+  // they only come online long after the standard branches.
+  [TechId.SiegeArtillery]: {
+    id: TechId.SiegeArtillery,
+    tier: 3,
+    requires: [TechId.ReinforcedArmor],
+    researchPoints: 280,
+    gold: 600_000n,
+  },
+  [TechId.HeavyAirframes]: {
+    id: TechId.HeavyAirframes,
+    tier: 3,
+    requires: [TechId.PrecisionBombing],
+    researchPoints: 280,
+    gold: 600_000n,
+  },
+  [TechId.DroneWarfare]: {
+    id: TechId.DroneWarfare,
+    tier: 3,
+    requires: [TechId.PrecisionBombing, TechId.HeavyAirframes],
+    researchPoints: 350,
+    gold: 900_000n,
+    unlocksUnit: UnitType.Drone,
+  },
+  [TechId.Robotics]: {
+    id: TechId.Robotics,
+    tier: 3,
+    requires: [TechId.ReinforcedArmor, TechId.SiegeArtillery],
+    researchPoints: 350,
+    gold: 900_000n,
+    unlocksUnit: UnitType.RobotFactory,
+  },
 };
 
 /** Stable bit order for the researched-tech bitmask. Append only. */
@@ -109,9 +146,13 @@ export const TECH_ORDER: readonly TechId[] = [
   TechId.PrecisionBombing,
   TechId.Trade,
   TechId.Mobilization,
+  TechId.SiegeArtillery,
+  TechId.HeavyAirframes,
+  TechId.DroneWarfare,
+  TechId.Robotics,
 ] as const;
 
-export const TECH_TIER_COUNT = 3;
+export const TECH_TIER_COUNT = 4;
 
 /** The units each tech unlocks, for the UI. */
 export const TECH_UNLOCKS: readonly (readonly TechId[])[] = TECH_ORDER.map(
@@ -134,6 +175,10 @@ export function techForUnit(type: UnitType): TechId | undefined {
       return TechId.Armor;
     case UnitType.Plane:
       return TechId.Aviation;
+    case UnitType.Drone:
+      return TechId.DroneWarfare;
+    case UnitType.RobotFactory:
+      return TechId.Robotics;
     default:
       return undefined;
   }
@@ -143,4 +188,6 @@ export function techForUnit(type: UnitType): TechId | undefined {
 export const TECH_GATED_UNITS: readonly UnitType[] = [
   UnitType.Tank,
   UnitType.Plane,
+  UnitType.Drone,
+  UnitType.RobotFactory,
 ];

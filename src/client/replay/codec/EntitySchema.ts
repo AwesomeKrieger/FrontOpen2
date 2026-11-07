@@ -389,6 +389,7 @@ export const PLAYER_FIELDS: readonly FieldDef<PlayerFields>[] = [
   field(["outgoingEmojis", list(EMOJI)]),
   field(["researchPoints", COUNTER]),
   field(["researchedTechs", U16]),
+  field(["robots", COUNTER]),
 ];
 
 export const UNIT_FIELDS: readonly FieldDef<UnitFields>[] = [

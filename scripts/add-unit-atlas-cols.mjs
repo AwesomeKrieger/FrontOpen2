@@ -170,7 +170,8 @@ if (height !== CELL || width % CELL !== 0) {
   );
 }
 const baseCols = width / CELL;
-const newWidth = width + 2 * CELL;
+const PIPELINES = 4;
+const newWidth = width + PIPELINES * CELL;
 const out = Buffer.alloc(newWidth * height * 4);
 // Row-wise copy: the source rows must be re-laid onto the wider image, so a
 // linear bytes.copy() would splice source rows together and bleed sprite
@@ -272,7 +273,45 @@ function sprite(x0, y0, rows) {
   ]);
 }
 
+// Col 14: Drone — smaller, angular quadcopter silhouette: a compact body with
+// two rotor bars, nose up like the plane.
+{
+  const X = (baseCols + 2) * CELL;
+  sprite(X, 0, [
+    "...D.....D...",
+    "...C.....C...",
+    ".LLLLLLLLLLL.",
+    ".LLLLLLLLLLL.",
+    "......M......",
+    "......M......",
+    "....MMMMM....",
+    "....MLLLM....",
+    "....MMMMM....",
+    "....D...D....",
+    "....D...D....",
+  ]);
+}
+
+// Col 15: Robot Factory mini-sprite (map rendering goes through
+// StructurePass; this cell keeps the atlas column order dense).
+{
+  const X = (baseCols + 3) * CELL;
+  sprite(X, 0, [
+    "....D...D....",
+    "....D.D.D....",
+    ".....LLL.....",
+    "....LLLLL....",
+    "..DLLLLLLLD..",
+    "..DLLLLLLL.D.",
+    "..DMLLLLMLD..",
+    "..DMLLLLMLD..",
+    "..DMMMMMMLD..",
+    "..DMMMMMMMD..",
+    "....DDDDDD...",
+  ]);
+}
+
 writeFileSync(ATLAS_URL, encodePng(newWidth, height, out));
 console.log(
-  `unit-atlas.png: ${baseCols} → ${baseCols + 2} columns, tank at col ${baseCols}, plane at col ${baseCols + 1}`,
+  `unit-atlas.png: ${baseCols} → ${baseCols + PIPELINES} columns, tank at col ${baseCols}, plane at col ${baseCols + 1}, drone at col ${baseCols + 2}, robot factory at col ${baseCols + 3}`,
 );

@@ -32,6 +32,9 @@ export class TankExecution implements Execution {
   private tank: Unit | null = null;
   // Tick the tank last fired a shell; shifted back so the first shot is free.
   private lastShellTick = -1000;
+  // Tick the tank last scorched a tile; shifted back so cruising through
+  // hostile land burns a tile on the very first fight tick.
+  private lastScorchTick = -1000;
 
   constructor(
     private player: Player,
@@ -153,19 +156,35 @@ export class TankExecution implements Execution {
     }
     const config = this.mg.config();
     const range = config.tankAttackRange();
-    const damage = config.tankDamage();
+    const damage = config.tankDamage(this.player);
+    const now = this.mg.ticks();
+
+    // Attrition: standing in hostile territory grinds the tank down.
+    const hereOwner = this.mg.owner(this.tank.tile());
+    if (
+      hereOwner.isPlayer() &&
+      hereOwner !== this.player &&
+      !this.player.isFriendly(hereOwner as Player)
+    ) {
+      this.tank.modifyHealth(
+        -config.tankTerritoryAttrition(),
+        hereOwner as Player,
+      );
+      if (!this.tank.isActive()) {
+        return;
+      }
+    }
 
     // Enemy units with health take direct damage.
     const targets = this.mg.nearbyUnits(
       this.tank.tile(),
       range,
-      [UnitType.Tank, UnitType.Plane],
+      [UnitType.Tank, UnitType.Plane, UnitType.Drone],
       ({ unit }) => this.isHostileUnit(unit as Unit),
     );
 
     // Every few ticks the tank fires a visible shell at the closest hostile
     // unit in range, so tank combat is readable on the map.
-    const now = this.mg.ticks();
     if (
       now - this.lastShellTick >= config.tankShellCooldown() &&
       targets.length > 0
@@ -188,6 +207,32 @@ export class TankExecution implements Execution {
     const healthDamage = Math.floor(damage / 2);
     for (const { unit } of targets) {
       unit.modifyHealth(-healthDamage, this.player);
+    }
+
+    // Structures in range take small chip damage every tick - tanks siege
+    // buildings into rubble.
+    const structures = this.mg.nearbyUnits(
+      this.tank.tile(),
+      range,
+      [
+        UnitType.City,
+        UnitType.Factory,
+        UnitType.Port,
+        UnitType.DefensePost,
+        UnitType.SAMLauncher,
+        UnitType.MissileSilo,
+        UnitType.RobotFactory,
+      ],
+      ({ unit }) => this.isHostileUnit(unit as Unit),
+    );
+    for (const { unit: structure } of structures) {
+      structure.modifyHealth(-Math.floor(damage / 4), this.player);
+    }
+
+    // Scorched earth: while fighting inside hostile territory the tank leaves
+    // a slow trail of gray fallout scars (one tile every few seconds).
+    if (hereOwner.isPlayer() && now - this.lastScorchTick >= 30) {
+      this.scorchTiles(this.tank.tile(), range, 1, now);
     }
 
     // Hostile defense posts in range fire back at the tank.
@@ -231,6 +276,47 @@ export class TankExecution implements Execution {
     return !this.player.isFriendly(owner as Player);
   }
 
+  /**
+   * Carve gray fallout scars into hostile territory: relinquish the tile
+   * (fallout throws on owned tiles) and mark it. Rate-limited via
+   * lastScorchTick so tanks leave a slow trail, not a scorched canvas.
+   */
+  private scorchTiles(
+    center: TileRef,
+    range: number,
+    maxTiles: number,
+    now: number,
+  ): void {
+    this.lastScorchTick = now;
+    const tiles: TileRef[] = [];
+    for (const t of this.mg.circleSearch(center, range)) {
+      if (!this.mg.isLand(t) || this.mg.hasFallout(t) || !this.mg.hasOwner(t)) {
+        continue;
+      }
+      const owner = this.mg.owner(t);
+      if (owner.isPlayer() && this.player.isFriendly(owner as Player)) {
+        continue;
+      }
+      tiles.push(t);
+    }
+    if (tiles.length === 0 || maxTiles <= 0) {
+      return;
+    }
+    // Always through: the tank sits right next to the tiles it fights over,
+    // so the nearest eligible tile is the deterministic first pick.
+    let best: TileRef = tiles[0];
+    let bestDist = Number.MAX_SAFE_INTEGER;
+    for (const t of tiles) {
+      const dist = this.mg.manhattanDist(t, center);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = t;
+      }
+    }
+    this.mg.relinquish(best);
+    this.mg.setFallout(best, true);
+  }
+
   isActive(): boolean {
     return this.active;
   }
@@ -245,6 +331,7 @@ export class TankExecution implements Execution {
       tankUnit: w.unitOrNull(this.tankUnit),
       aiControlled: this.player.type() === PlayerType.Bot,
       lastShellTick: this.lastShellTick,
+      lastScorchTick: this.lastScorchTick,
     });
   }
 
@@ -257,6 +344,7 @@ export class TankExecution implements Execution {
     this.tankUnit = r.unitOrNull(s.tankUnit);
     // Optional for replay compatibility; pre-shell snapshots start cold.
     this.lastShellTick = s.lastShellTick ?? -1000;
+    this.lastScorchTick = s.lastScorchTick ?? -1000;
   }
 }
 
@@ -269,6 +357,7 @@ const TankStateSchema = z.object({
   tankUnit: zRef().nullable(),
   aiControlled: z.boolean(),
   lastShellTick: zInt().optional(),
+  lastScorchTick: zInt().optional(),
 });
 type TankState = z.infer<typeof TankStateSchema>;
 
